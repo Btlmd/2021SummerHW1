@@ -1,34 +1,30 @@
 <RCC>
-    <qresource prefix="/0">
-        <file>0</file>
-        <file>1</file>
-        <file>2</file>
-        <file>3</file>
-        <file>4</file>
-        <file>5</file>
-        <file>6</file>
-        <file>7</file>
-        <file>8</file>
-        <file>9</file>
-        <file>10</file>
-        <file>11</file>
-    </qresource>
-    <qresource prefix="/1">
-        <file>1_0</file>
-        <file>1_1</file>
-        <file>1_2</file>
-        <file>1_3</file>
-        <file>1_4</file>
-        <file>1_5</file>
-        <file>1_6</file>
-        <file>1_7</file>
-        <file>1_8</file>
-        <file>1_9</file>
-        <file>1_10</file>
-        <file>1_11</file>
-    </qresource>
-    <qresource prefix="/common">
-        <file>background</file>
-        <file>unknown</file>
+    <qresource prefix="/">
+        <file>Resource/0/0</file>
+        <file>Resource/0/1</file>
+        <file>Resource/0/2</file>
+        <file>Resource/0/3</file>
+        <file>Resource/0/4</file>
+        <file>Resource/0/5</file>
+        <file>Resource/0/6</file>
+        <file>Resource/0/7</file>
+        <file>Resource/0/8</file>
+        <file>Resource/0/9</file>
+        <file>Resource/0/10</file>
+        <file>Resource/0/11</file>
+        <file>Resource/1/0</file>
+        <file>Resource/1/1</file>
+        <file>Resource/1/2</file>
+        <file>Resource/1/3</file>
+        <file>Resource/1/4</file>
+        <file>Resource/1/5</file>
+        <file>Resource/1/6</file>
+        <file>Resource/1/7</file>
+        <file>Resource/1/8</file>
+        <file>Resource/1/9</file>
+        <file>Resource/1/10</file>
+        <file>Resource/1/11</file>
+        <file>Resource/background</file>
+        <file>Resource/unknown</file>
     </qresource>
 </RCC>
