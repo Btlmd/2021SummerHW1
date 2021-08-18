@@ -2,6 +2,8 @@
 #include "QDebug"
 #include "piece.h"
 #include <QPixmap>
+#include "mainwindow.h"
+
 
 StepHint::StepHint(QWidget* parent, int loc, Piece* from): QLabel{parent}, call_back{from}, location{loc}
 {    
@@ -27,5 +29,7 @@ void StepHint::mousePressEvent(QMouseEvent *e) {
 void StepHint::on_click(){
     if(call_back){
         call_back->move_to(location);
+        Piece::turn_switch(false);
+        Piece::window->send_move(call_back->get_location(), location);
     }
 }

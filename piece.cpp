@@ -3,8 +3,11 @@
 #include <QPalette>
 #include <QBrush>
 #include <QDebug>
-#include <mainwindow.h>
 #include <QChar>
+#include "mainwindow.h"
+#include <sstream>
+
+using namespace std;
 
 int Piece::our_team {-1};
 int Piece::camp_site[10] = {11, 13, 17, 21, 23, 36, 38, 42, 46, 48};
@@ -18,7 +21,12 @@ int Piece::railway_site[5][12] = {
     {0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0}
 };
 Piece* Piece::board[60] = {nullptr};
-
+bool Piece::our_tern {false};
+Piece* Piece::step_hint_renderer {nullptr};
+int Piece::win_y[12] = {53, 107, 162, 217, 272, 327, 500, 555, 610, 665, 720, 775};
+int Piece::win_x[5] = {53, 168, 280, 393, 506};
+int Piece::my_prev_flip_team {-1};
+int Piece::opponent_prev_flip_team {-1};
 bool Piece::is_null(int location) {
     return board[location] == nullptr;
 }
@@ -26,14 +34,17 @@ bool Piece::is_null(int location) {
 bool Piece::operable(int location){
     //It should be previously judged if the piece is movable!!!
 
-    if(board[location] == nullptr)
+    if(is_null(location))
         return true;
+
+    if(in_camp(location))
+        return false;
 
     if(!board[location]->clear)
         return false;
 
     int other = board[location]->identity;
-    for(int i =0; i < 10; ++i)
+    for(int i = 0; i < 10; ++i)
         if(other == camp_site[i])
             return false;
 
@@ -59,11 +70,13 @@ bool Piece::operable(int location){
     return false;
 }
 
-Piece::Piece(QWidget* parent): QPushButton(parent)
+Piece::Piece(QWidget* parent, int loc, int tm, int id): QPushButton(parent),  identity{id},team{tm}
 {
     connect(this, &QPushButton::clicked, this, &Piece::test);
-    this->setStyleSheet("border-image:url(:/pic/Resource/unknown) 0px 0px no-repeat;");
-    this->setCursor(QCursor(Qt::ForbiddenCursor));
+    setStyleSheet("border-image:url(:/pic/Resource/unknown) 0px 0px no-repeat;");
+    location = loc;
+    place();
+    setCursor(QCursor(Qt::ForbiddenCursor));
 
 }
 
@@ -73,7 +86,7 @@ void Piece::test(){
 }
 
 void Piece::on_click() {
-    if(!MainWindow::myTern)
+    if(!our_tern)
         return;// emit not your tern
     if(team != our_team)
         return;// emit not your team
@@ -89,8 +102,9 @@ void Piece::on_click() {
             Hinters[i] = new StepHint(qobject_cast<QWidget*>(this->parent()), render_list[i], this);
         }
     } else {
-        flip_render();
-        // emit the tern finish signal
+        flip();
+        turn_switch(false);
+        window->send_flip(location);
     }
 }
 
@@ -320,7 +334,6 @@ QList<int> Piece::get_available() {
     return av;
 }
 
-
 QList<int>& Piece::go_along(QList<int>& available_list, int cursor, int (*next_opeartion)(int), bool (*condition)(int)) {
     while(condition(cursor)){
         if(is_null(cursor)){
@@ -364,13 +377,6 @@ void Piece::search_along(QList<int>& av, int loc){
 
 }
 
-void Piece::flip_render() {
-    QString team_string {team == 1 ? "1" : "0"};
-    this->setStyleSheet("border-image:url(:/pic/Resource/" + team_string + "/" + QString(QChar((char)('0'+identity)))+ ") 0px 0px no-repeat;");
-    if(our_team != -1 && our_team != team)
-        this->setCursor(QCursor(Qt::ForbiddenCursor));
-}
-
 bool Piece::in_camp(int loc) {
     for(int i : camp_site) {
         if(i == loc)
@@ -384,6 +390,8 @@ void Piece::move_to(int loc) {
         delete Hinters[i];
     }
     delete Hinters;
+
+    location = loc;
 
     //Null situation
     if(is_null(loc)) {
@@ -399,13 +407,16 @@ void Piece::move_to(int loc) {
         board[loc]->hide();
         this->hide();
         board[loc] = nullptr;
-        //annihilating movie to play
+        //annihilating movie to play @ loc
         return;
     }
 
     //Winning situation
     if(other == 11) {
-
+        if(board[loc]->team == our_team)
+            window->lose();
+        else
+            window->win();
     }
 
     //Eat
@@ -414,3 +425,81 @@ void Piece::move_to(int loc) {
     return;
 
 }
+
+void Piece::flip(bool self){
+    //render effect
+    this->setStyleSheet("border-image:url(:/pic/Resource/" + QString::number(team) + "/" + QString::number(identity)+ ") 0px 0px no-repeat;");
+    this->clear = true;
+
+    if(our_team != -1)
+        return;
+
+    if(self && my_prev_flip_team == team){
+        our_team = team;
+        window->our_team_determined(our_team);
+    }
+
+    if(!self && opponent_prev_flip_team == team){
+        our_team = team == 1 ? 0 : 1;
+        window->our_team_determined(our_team);
+    }
+}
+
+//set location, then move()
+void Piece::place() {
+    this->move(win_x[location % 5], win_y[location / 5]);
+}
+
+/* init string's format hint
+ *
+ * <team> <identity>\n
+ * line for camp skipped!!
+ */
+void Piece::init_board(QString layout) {
+    istringstream l (layout.toStdString());
+    for(int i = 0; i < 60; ++i){
+        if(in_camp(i))
+            continue;
+        int tm, id;
+        l>>tm>>id;
+        Piece* p = new Piece(window, i, tm, id);
+    }
+}
+
+
+void Piece::turn_switch(bool our_turn){
+    if(our_turn == Piece::our_tern)
+        return;
+    Piece::our_tern = our_turn;
+
+    if(our_turn){
+        if(our_team == -1) {
+            for(Piece* p : board){
+                if(p != nullptr) {
+                    if(p->clear){
+                        p->setCursor(QCursor(Qt::ForbiddenCursor));
+                    } else {
+                        p->setCursor(QCursor(Qt::ArrowCursor));
+                    }
+                }
+            }
+        } else {
+            for(Piece* p : board){
+                if(p != nullptr) {
+                    if(p->team == our_team)
+                        p->setCursor(QCursor(Qt::ArrowCursor));
+                    else
+                        p->setCursor(QCursor(Qt::ForbiddenCursor));
+                }
+            }
+        }
+
+    } else {
+        for(Piece* p : board){
+            if(p != nullptr) {
+                p->setCursor(QCursor(Qt::ForbiddenCursor));
+            }
+        }
+    }
+}
+
