@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <piece.h>
+#include <stephint.h>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }

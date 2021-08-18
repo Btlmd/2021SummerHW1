@@ -6,6 +6,7 @@
 #include <mainwindow.h>
 #include <QChar>
 
+int Piece::our_team {-1};
 int Piece::camp_site[10] = {11, 13, 17, 21, 23, 36, 38, 42, 46, 48};
 int Piece::normal_site[18] = {0, 1, 2, 3, 4, 12, 16, 18, 22, 37, 41, 43, 47, 55, 56, 57, 58 ,59};
 int Piece::mine_left {3};
@@ -16,6 +17,7 @@ int Piece::railway_site[5][12] = {
     {0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0},
     {0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0}
 };
+Piece* Piece::board[60] = {nullptr};
 
 bool Piece::is_null(int location) {
     return board[location] == nullptr;
@@ -71,15 +73,21 @@ void Piece::test(){
 }
 
 void Piece::on_click() {
-    if(team != our_team)
-        return;
-    if(identity == 10 || identity == 11)
-        return;
     if(!MainWindow::myTern)
-        return;
+        return;// emit not your tern
+    if(team != our_team)
+        return;// emit not your team
+    if(identity == 10 || identity == 11)
+        return;// emit not movable
+
 
     if(clear) {
         QList<int> render_list {get_available()};
+        Hinters_cnt = render_list.size();
+        Hinters = new StepHint*[Hinters_cnt];
+        for(int i = 0; i < Hinters_cnt; ++i) {
+            Hinters[i] = new StepHint(qobject_cast<QWidget*>(this->parent()), render_list[i], this);
+        }
     } else {
         flip_render();
         // emit the tern finish signal
@@ -361,4 +369,48 @@ void Piece::flip_render() {
     this->setStyleSheet("border-image:url(:/pic/Resource/" + team_string + "/" + QString(QChar((char)('0'+identity)))+ ") 0px 0px no-repeat;");
     if(our_team != -1 && our_team != team)
         this->setCursor(QCursor(Qt::ForbiddenCursor));
+}
+
+bool Piece::in_camp(int loc) {
+    for(int i : camp_site) {
+        if(i == loc)
+            return true;
+    }
+    return false;
+}
+
+void Piece::move_to(int loc) {
+    for(int i = 0; i < Hinters_cnt; ++i) {
+        delete Hinters[i];
+    }
+    delete Hinters;
+
+    //Null situation
+    if(is_null(loc)) {
+        board[loc] = this;
+        //this->move()
+        return;
+    }
+
+    int other = board[loc]->identity;
+
+    //Annihilation
+    if(this->identity == 9 || other == 9 || this->identity == other) {
+        board[loc]->hide();
+        this->hide();
+        board[loc] = nullptr;
+        //annihilating movie to play
+        return;
+    }
+
+    //Winning situation
+    if(other == 11) {
+
+    }
+
+    //Eat
+        board[loc]->hide();
+        //this->move();
+    return;
+
 }

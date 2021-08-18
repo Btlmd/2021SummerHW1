@@ -13,11 +13,13 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     piece.cpp \
+    server.cpp \
     stephint.cpp
 
 HEADERS += \
     mainwindow.h \
     piece.h \
+    server.h \
     stephint.h
 
 FORMS += \

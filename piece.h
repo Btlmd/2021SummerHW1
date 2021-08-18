@@ -7,6 +7,7 @@
 #include <QMessageBox>
 #include <string>
 
+class StepHint;
 
 class Piece : public QPushButton
 {
@@ -17,6 +18,7 @@ public:
 public slots:
     void test();
     void on_click();
+    void move_to(int loc);
 private:
     int location;
     int x;
@@ -33,8 +35,10 @@ private:
     void search_further(QList<int>&, int);
     QList<int>& go_along(QList<int>& available_list, int cursor, int (*next_opeartion)(int), bool (*condition)(int));
     void flip_render();
+    StepHint** Hinters {nullptr};
+    int Hinters_cnt {0};
 public:
-    static int our_team {-1};
+    static int our_team;
     static Piece* board[60];
     static int camp_site[10];
     static int normal_site[18];
@@ -43,6 +47,7 @@ public:
         return y * 5 + x;
     }
     static int mine_left;
+    static bool in_camp(int);
 
 
 };

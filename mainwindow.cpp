@@ -10,6 +10,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     auto nb = new Piece(this);
+    auto sh = new StepHint(this, 11);
+
 }
 
 MainWindow::~MainWindow()
@@ -19,5 +21,5 @@ MainWindow::~MainWindow()
 
 
 void MainWindow::init() {
-    for()
+
 }

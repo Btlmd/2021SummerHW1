@@ -26,5 +26,7 @@
         <file>Resource/1/11</file>
         <file>Resource/background</file>
         <file>Resource/unknown</file>
+        <file>Resource/circ_filling.png</file>
+        <file>Resource/rect_filling.png</file>
     </qresource>
 </RCC>
