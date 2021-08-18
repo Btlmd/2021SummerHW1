@@ -40,7 +40,7 @@
      <string/>
     </property>
     <property name="pixmap">
-     <pixmap resource="Res.qrc">:/common/background</pixmap>
+     <pixmap>:/Resource/background</pixmap>
     </property>
     <property name="scaledContents">
      <bool>false</bool>
@@ -81,11 +81,43 @@
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
-   <widget class="QLabel" name="Tern">
+   <widget class="QLabel" name="TernLabel">
     <property name="geometry">
      <rect>
       <x>650</x>
       <y>100</y>
+      <width>161</width>
+      <height>71</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Placeholder.</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton">
+    <property name="geometry">
+     <rect>
+      <x>710</x>
+      <y>430</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="cursor">
+     <cursorShape>ForbiddenCursor</cursorShape>
+    </property>
+    <property name="text">
+     <string>PushButton</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="TeamLabel">
+    <property name="geometry">
+     <rect>
+      <x>650</x>
+      <y>180</y>
       <width>161</width>
       <height>71</height>
      </rect>
@@ -146,8 +178,6 @@
    </property>
   </action>
  </widget>
- <resources>
-  <include location="Res.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

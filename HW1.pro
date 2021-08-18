@@ -11,10 +11,14 @@ CONFIG += c++11
 
 SOURCES += \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    piece.cpp \
+    stephint.cpp
 
 HEADERS += \
-    mainwindow.h
+    mainwindow.h \
+    piece.h \
+    stephint.h
 
 FORMS += \
     mainwindow.ui
