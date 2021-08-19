@@ -10,14 +10,36 @@
     <height>902</height>
    </rect>
   </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>0</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>16777215</width>
+    <height>16777215</height>
+   </size>
+  </property>
   <property name="windowTitle">
    <string>Military Chess</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="res.qrc">
+    <normaloff>:/pic/Resource/icon.ico</normaloff>:/pic/Resource/icon.ico</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QLCDNumber" name="TimeLeftLCD">
     <property name="geometry">
      <rect>
-      <x>540</x>
+      <x>510</x>
       <y>10</y>
       <width>71</width>
       <height>61</height>
@@ -49,7 +71,7 @@
    <widget class="QLabel" name="TernLabel">
     <property name="geometry">
      <rect>
-      <x>370</x>
+      <x>380</x>
       <y>50</y>
       <width>101</width>
       <height>30</height>
@@ -59,15 +81,15 @@
      <string/>
     </property>
     <property name="alignment">
-     <set>Qt::AlignCenter</set>
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
    </widget>
    <widget class="QLabel" name="TeamLabel">
     <property name="geometry">
      <rect>
-      <x>100</x>
+      <x>103</x>
       <y>50</y>
-      <width>61</width>
+      <width>101</width>
       <height>30</height>
      </rect>
     </property>
@@ -75,7 +97,7 @@
      <string/>
     </property>
     <property name="alignment">
-     <set>Qt::AlignCenter</set>
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
    </widget>
    <widget class="QLabel" name="InfoLabel">

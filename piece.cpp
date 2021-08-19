@@ -21,14 +21,17 @@ int Piece::win_y[12] = {113, 167, 222, 277, 332, 387, 559, 614, 669, 724, 779, 8
 int Piece::win_x[5] = {56, 168, 280, 393, 506};
 int Piece::my_prev_flip_team {-1};
 int Piece::opponent_prev_flip_team {-1};
-bool Piece::is_null(int location) {
-    return board[location] == nullptr;
-}
 MainWindow* Piece::win {nullptr};
 int Piece::Hinters_cnt {0};
 StepHint** Piece::Hinters {nullptr};
 int Piece::step_cnt {0};
 bool Piece::ended {false};
+int Piece::our_timeout_cnt {0};
+
+
+bool Piece::is_null(int location) {
+    return board[location] == nullptr;
+}
 
 bool Piece::operable(int location){
     //It should be previously judged if the piece is movable!!!
@@ -440,6 +443,9 @@ void Piece::move_to(int loc, bool self) {
         win->send_move(location, loc);
     }
 
+    ++step_cnt;
+    win->set_info_default();
+
     remove_hint_renders();
 
     board[location] = nullptr;
@@ -477,11 +483,9 @@ void Piece::move_to(int loc, bool self) {
         board[loc]->hide();
         this->place();
         if(board[loc]->team == our_team)
-            win->lose();
+            end("You lose.");
         else
-            win->win();
-        ended = true;
-        cursor_total_disable();
+            end("You win!");
     }
 
     //Eat
@@ -496,6 +500,8 @@ void Piece::flip(bool self){
     //render effect
     this->setStyleSheet("border-image:url(:/pic/Resource/" + QString::number(team) + "/" + QString::number(identity)+ ".png) 0px 0px no-repeat;");
     this->clear = true;
+    ++step_cnt;
+    win->set_info_default();
 
     //undetermined phase judge logic ONLY
     if(our_team == -1){
@@ -597,3 +603,9 @@ void Piece::cursor_total_disable(){
     }
 }
 
+void Piece::end(QString msg_box, QString msg_line){
+    ended = true;
+    cursor_total_disable();
+    QMessageBox::information(win, "Military Chess", msg_box);
+    win->information(msg_line == "" ? msg_box : msg_line, true);
+}

@@ -19,6 +19,11 @@ StepHint::StepHint(QWidget* parent, int loc, Piece* from): QLabel{parent}, call_
         setPixmap(bg);
         resize(bg.width(), bg.height());
         move(Piece::win_x[location % 5] - 5 + 8 , Piece::win_y[location / 5] - 5 + 8 + 3);
+    } else if(Piece::board[loc]->getId() == 11) {
+        QPixmap bg(":/pic/Resource/flag_filling.png");
+        setPixmap(bg);
+        resize(bg.width(), bg.height());
+        move(Piece::win_x[location % 5] - 5, Piece::win_y[location / 5] - 5 + 4);
     } else {
         QPixmap bg(":/pic/Resource/not_null_filling.png");
         setPixmap(bg);

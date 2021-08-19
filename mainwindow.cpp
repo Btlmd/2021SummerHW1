@@ -12,7 +12,10 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-
+    setMinimumSize(size());
+    setMaximumSize(size());
+    setWindowFlags(Qt::WindowCloseButtonHint);
+    information("Click <b>Connect</b> to launch a new connection!", true);
 }
 
 MainWindow::~MainWindow()
@@ -27,11 +30,11 @@ void MainWindow::init() {
 
 void MainWindow::connect_to_server(QString IP, int Port, bool from_server) {
     conn = new QTcpSocket;
-    information("Connecting to server...");
+    information("Connecting to server...", true);
     conn->connectToHost(IP, Port);
     connect(conn, &QTcpSocket::connected, [=](){
         if(from_server){
-            information("Waiting for the other play to join...");
+            information("Waiting for the other play to join...", true);
         } else {
             information("Server connected!");
         }
@@ -54,7 +57,7 @@ void MainWindow::on_actionCreate_connection_as_a_server_triggered()
     QString msg {"A TCP server has been setup locally on port "};
     QString local_possible_ip {};
     msg += QString::number(9999);
-    msg += ".\n Depending on your network environment, possible IP address are:\n";
+    msg += ".\nDepending on your network environment, possible IP address are:\n";
     auto l = QNetworkInterface::allInterfaces().at(0).allAddresses();
     qDebug()<<l.size();
     for(QHostAddress ip : l) {
@@ -71,7 +74,7 @@ void MainWindow::on_actionCreate_connection_as_a_server_triggered()
     server = new Server(9999);
     server->init_server();
     connect_to_server(local_possible_ip, server->get_port(), true);
-    //QMessageBox::information(this, "Create server", msg);
+    QMessageBox::information(this, "Create server", msg);
 }
 
 void MainWindow::read_dispatcher(){
@@ -81,7 +84,7 @@ void MainWindow::read_dispatcher(){
 
     switch(content[0].toLatin1()) {
     case 'A': // A
-        win(true);
+        Piece::end("You win!\nYour opponent admitted failure!", "You win! | Your opponent admitted failure!")
         break;
 
     case 'I': // I01 11\n 0 8\n 1 8\n ...
@@ -93,6 +96,7 @@ void MainWindow::read_dispatcher(){
             Piece::turn_switch(false);
         }
         ui->TeamLabel->setText("Unknown");
+        set_info_default();
         break;
 
     case 'M':// M11 23     M7 22
@@ -115,25 +119,11 @@ void MainWindow::read_dispatcher(){
         break;
 
     case 'T':// T
-        information("Opponent time out!");
+        information("<font color=\"red\">Opponent time out!</font>");
         Piece::turn_switch(true);
         break;
 
     }
-}
-
-void MainWindow::win(bool from_admit) {
-    if(from_admit)
-        QMessageBox::information(this, "Military Chess", "You win!\nYour opponent admitted failure!");
-    else
-        QMessageBox::information(this, "Military Chess", "You win!");
-}
-
-void MainWindow::lose(bool from_admit) {
-    if(from_admit)
-        QMessageBox::information(this, "Military Chess", "You admitted defeat!");
-    else
-        QMessageBox::information(this, "Military Chess", "You lose!");
 }
 
 void MainWindow::turn(bool our_turn){
@@ -152,8 +142,21 @@ void MainWindow::our_team_determined(int team) {
     ui->TeamLabel->setTextFormat(Qt::RichText);
 }
 
-void MainWindow::information(QString msg) {
-    QMessageBox::information(this, "MC", msg);
+void MainWindow::information(QString msg, bool lasting) {
+    if(info_show_timer){
+        if(info_show_timer->isActive())
+            info_show_timer->stop();
+        info_show_timer->deleteLater();
+    }
+    if(lasting){
+        info_show_timer = nullptr;
+    } else {
+        info_show_timer = new QTimer(this);
+        connect(info_show_timer, &QTimer::timeout, this, &MainWindow::set_info_default);
+        info_show_timer->start(2000);
+    }
+
+    ui->InfoLabel->setText(msg);
 }
 
 void MainWindow::set_info_default() {
@@ -161,6 +164,9 @@ void MainWindow::set_info_default() {
     msg += QString::number(Piece::opponent_mine_left);
     msg += "  Total steps: ";
     msg += QString::number(Piece::step_cnt);
+    if(Piece::our_timeout_cnt != 0)
+        msg += " Timeout count: "+QString::number(Piece::our_timeout_cnt);
+
     ui->InfoLabel->setText(msg);
 }
 

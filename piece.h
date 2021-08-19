@@ -23,8 +23,12 @@ public slots:
     void move_to(int loc, bool self = true);
     void flip(bool self = true);
 
-    int get_location() {
+    int get_location() const {
         return location;
+    }
+
+    int getId() const {
+        return identity;
     }
 private:
     int location {0};
@@ -67,6 +71,8 @@ public:
     static int step_cnt;
     static void cursor_total_disable();
     static bool ended;
+    static void end(QString msg_box, QString msg_line = "");
+    static int our_timeout_cnt;
 };
 
 #endif // PIECE_H

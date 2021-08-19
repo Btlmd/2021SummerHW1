@@ -6,6 +6,7 @@
 #include <stephint.h>
 #include <server.h>
 #include <QTcpSocket>
+#include <QTimer>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -22,19 +23,16 @@ public:
     // game operations
     void our_team_determined(int team);
 
-    void information(QString msg);
+    void information(QString msg, bool lasting = false);
 
-    void set_info_default();
 
     void send_move(int from, int to);
 
     void send_flip(int loc);
 
-    void win(bool from_admit = false);
-
-    void lose(bool from_admit = false);
-
     void turn(bool our_turn);
+
+    void set_info_default();
 
 private slots:
     void on_actionConnect_to_a_server_triggered();
@@ -46,6 +44,7 @@ private slots:
     void read_dispatcher();
 
     void sck_write(const QByteArray& bytes);
+
 private:
     Ui::MainWindow *ui;
 
@@ -55,10 +54,6 @@ private:
 
     void init();
 
-
-
-
-
-
+    QTimer* info_show_timer {nullptr};
 };
 #endif // MAINWINDOW_H
