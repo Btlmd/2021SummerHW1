@@ -49,9 +49,9 @@
    <widget class="QLabel" name="TernLabel">
     <property name="geometry">
      <rect>
-      <x>390</x>
+      <x>370</x>
       <y>50</y>
-      <width>121</width>
+      <width>101</width>
       <height>30</height>
      </rect>
     </property>
@@ -67,7 +67,7 @@
      <rect>
       <x>100</x>
       <y>50</y>
-      <width>121</width>
+      <width>61</width>
       <height>30</height>
      </rect>
     </property>
@@ -104,7 +104,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Side:</string>
+     <string>Side :</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -115,12 +115,12 @@
      <rect>
       <x>300</x>
       <y>50</y>
-      <width>81</width>
+      <width>61</width>
       <height>30</height>
      </rect>
     </property>
     <property name="text">
-     <string>Current:</string>
+     <string>Current :</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>

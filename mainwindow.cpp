@@ -25,12 +25,16 @@ void MainWindow::init() {
 
 }
 
-void MainWindow::connect_to_server(QString IP, int Port) {
+void MainWindow::connect_to_server(QString IP, int Port, bool from_server) {
     conn = new QTcpSocket;
     information("Connecting to server...");
     conn->connectToHost(IP, Port);
-    connect(conn, &QTcpSocket::connected, [&](){
-        information("Waiting for the other side to join...");
+    connect(conn, &QTcpSocket::connected, [=](){
+        if(from_server){
+            information("Waiting for the other play to join...");
+        } else {
+            information("Server connected!");
+        }
     });
     connect(conn, &QTcpSocket::readyRead, this, &MainWindow::read_dispatcher);
 
@@ -66,7 +70,7 @@ void MainWindow::on_actionCreate_connection_as_a_server_triggered()
     }
     server = new Server(9999);
     server->init_server();
-    connect_to_server(local_possible_ip, server->get_port());
+    connect_to_server(local_possible_ip, server->get_port(), true);
     //QMessageBox::information(this, "Create server", msg);
 }
 
@@ -149,7 +153,7 @@ void MainWindow::our_team_determined(int team) {
 }
 
 void MainWindow::information(QString msg) {
-
+    QMessageBox::information(this, "MC", msg);
 }
 
 void MainWindow::set_info_default() {

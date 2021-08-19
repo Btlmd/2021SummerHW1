@@ -19,7 +19,7 @@ private slots:
     void on_SubmitButton_clicked();
 
 public: signals:
-    void server_config_done(QString IP, int Port);
+    void server_config_done(QString IP, int Port, int from_server);
 private:
     Ui::ClientSettings *ui;
     bool is_input_legal();

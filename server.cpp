@@ -59,16 +59,13 @@ void Server::init_server() {
         qDebug()<<"conn detected.";
         sck[sck_ptr] = svr->nextPendingConnection();
         if(sck_ptr == MAX_SCK) {
-            qDebug()<<"MAX_CASE!";
             delete sck[sck_ptr];
             return;
         }
 
         ip[sck_ptr] = sck[sck_ptr]->peerAddress().toIPv4Address();
-        qDebug()<<"sck_ptr:"<<sck_ptr;
         int ptr = sck_ptr;
         connect(sck[sck_ptr], &QTcpSocket::readyRead, [=](){
-            qDebug()<<"sck_ptr_in_lambda:"<<ptr;
             read_and_dispatch(ptr);
         });
         sck_ptr++;// always point to the place to be written

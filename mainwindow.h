@@ -41,7 +41,7 @@ private slots:
 
     void on_actionCreate_connection_as_a_server_triggered();
 
-    void connect_to_server(QString IP, int Port);
+    void connect_to_server(QString IP, int Port, bool from_server = false);
 
     void read_dispatcher();
 

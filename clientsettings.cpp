@@ -20,7 +20,7 @@ ClientSettings::~ClientSettings()
 void ClientSettings::on_SubmitButton_clicked()
 {
     if(is_input_legal()){
-        emit server_config_done(ui->IPInput->text(), ui->PortInput->text().toInt());
+        emit server_config_done(ui->IPInput->text(), ui->PortInput->text().toInt(), false);
         this->close();
     } else {
         QMessageBox::warning(this, "Warning", "Invalid input!");

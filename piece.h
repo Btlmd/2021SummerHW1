@@ -65,6 +65,8 @@ public:
     static StepHint** Hinters;
     static int Hinters_cnt;
     static int step_cnt;
+    static void cursor_total_disable();
+    static bool ended;
 };
 
 #endif // PIECE_H

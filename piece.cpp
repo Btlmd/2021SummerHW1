@@ -28,34 +28,37 @@ MainWindow* Piece::win {nullptr};
 int Piece::Hinters_cnt {0};
 StepHint** Piece::Hinters {nullptr};
 int Piece::step_cnt {0};
+bool Piece::ended {false};
 
 bool Piece::operable(int location){
     //It should be previously judged if the piece is movable!!!
-
+    qDebug()<< "";
+    qDebug()<<"BEGIN LOCATION @"<<location<<"as"<<identity;
     if(is_null(location))
         return true;
-
+    qDebug()<<"is_null pass";
     if(in_camp(location))
         return false;
-
+    qDebug()<<"in_camp pass";
     if(board[location]->team == team)
         return false;
-
+    qDebug()<<"same_team pass";
     if(!board[location]->clear)
         return false;
-
+    qDebug()<<"Clearance pass";
     int other = board[location]->identity;
-    for(int i = 0; i < 10; ++i)
-        if(other == camp_site[i])
-            return false;
 
     if(identity <= 8 && other <= 8)
         return identity >= other;
+    qDebug()<<"military_comparison pass with"<<identity<<other;
 
     if(identity == 9 || other == 9)
-        return true;
+        if(other != 11)
+            return true;
 
+    qDebug()<<"bomb pass";
     if(other == 11) {
+        qDebug()<<"Trial on flag, left mine(s) "<<opponent_mine_left;
         if(opponent_mine_left == 0) {
             return true;
         } else {
@@ -92,6 +95,9 @@ void Piece::test(){
 
 void Piece::on_click() {
     remove_hint_renders();
+
+    if(ended)
+        return;
 
     if(!our_tern){
         win->information("Now it's not our term.");
@@ -452,8 +458,10 @@ void Piece::move_to(int loc, bool self) {
     int other = board[loc]->identity;
 
     //when romoving opponent's mine
-    if(other == 10 && board[loc]->team != our_team)
+    if(other == 10 && board[loc]->team != our_team){
         --opponent_mine_left;
+        qDebug()<<"Decrease opppnent mine left"<< opponent_mine_left;
+    }
 
     //Annihilation
     if(this->identity == 9 || other == 9 || this->identity == other) {
@@ -467,12 +475,13 @@ void Piece::move_to(int loc, bool self) {
     //Winning situation
     if(other == 11) {
         board[loc]->hide();
-        board[loc] = this;
         this->place();
         if(board[loc]->team == our_team)
             win->lose();
         else
             win->win();
+        ended = true;
+        cursor_total_disable();
     }
 
     //Eat
@@ -542,14 +551,14 @@ void Piece::init_board(QString layout, MainWindow* w) {
 }
 
 
-void Piece::turn_switch(bool our_turn){
-    win->turn(our_tern);
+void Piece::turn_switch(bool ot){
+    win->turn(ot);
 
-    if(our_turn == Piece::our_tern)
+    if(ot == our_tern)
         return;
-    Piece::our_tern = our_turn;
+    Piece::our_tern = ot;
 
-    if(our_turn){
+    if(our_tern){
         if(our_team == -1) {
             for(Piece* p : board){
                 if(p != nullptr) {
@@ -563,19 +572,27 @@ void Piece::turn_switch(bool our_turn){
         } else {
             for(Piece* p : board){
                 if(p != nullptr) {
-                    if(p->team == our_team)
+                    if(p->clear == false){
                         p->setCursor(QCursor(Qt::ArrowCursor));
-                    else
-                        p->setCursor(QCursor(Qt::ForbiddenCursor));
+                    } else {
+                        if(p->team == our_team)
+                            p->setCursor(QCursor(Qt::ArrowCursor));
+                        else
+                            p->setCursor(QCursor(Qt::ForbiddenCursor));
+                    }
                 }
             }
         }
 
     } else {
-        for(Piece* p : board){
-            if(p != nullptr) {
-                p->setCursor(QCursor(Qt::ForbiddenCursor));
-            }
+        cursor_total_disable();
+    }
+}
+
+void Piece::cursor_total_disable(){
+    for(Piece* p : board){
+        if(p != nullptr) {
+            p->setCursor(QCursor(Qt::ForbiddenCursor));
         }
     }
 }
