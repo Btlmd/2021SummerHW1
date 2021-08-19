@@ -24,7 +24,7 @@ public:
     ~Server();
 
 public slots:
-    void send(int client_index, const QString& msg);
+    void send(int client_index, const QByteArray& msg);
     void read_and_dispatch(int client_index);
 signals:
 

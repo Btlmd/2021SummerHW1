@@ -12,24 +12,22 @@ using namespace std;
 int Piece::our_team {-1};
 int Piece::camp_site[10] = {11, 13, 17, 21, 23, 36, 38, 42, 46, 48};
 int Piece::normal_site[18] = {0, 1, 2, 3, 4, 12, 16, 18, 22, 37, 41, 43, 47, 55, 56, 57, 58 ,59};
-int Piece::mine_left {3};
-int Piece::railway_site[5][12] = {
-    {0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
-    {0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0},
-    {0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0},
-    {0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0},
-    {0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0}
-};
+int Piece::opponent_mine_left {3};
+int Piece::railway_site[60] = {0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1,
+                               1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0};
 Piece* Piece::board[60] = {nullptr};
 bool Piece::our_tern {false};
-Piece* Piece::step_hint_renderer {nullptr};
-int Piece::win_y[12] = {53, 107, 162, 217, 272, 327, 500, 555, 610, 665, 720, 775};
-int Piece::win_x[5] = {53, 168, 280, 393, 506};
+int Piece::win_y[12] = {53, 107, 162, 217, 272, 327, 499, 554, 609, 664, 719, 774};
+int Piece::win_x[5] = {56, 168, 280, 393, 506};
 int Piece::my_prev_flip_team {-1};
 int Piece::opponent_prev_flip_team {-1};
 bool Piece::is_null(int location) {
     return board[location] == nullptr;
 }
+MainWindow* Piece::win {nullptr};
+int Piece::Hinters_cnt {0};
+StepHint** Piece::Hinters {nullptr};
+
 
 bool Piece::operable(int location){
     //It should be previously judged if the piece is movable!!!
@@ -38,6 +36,9 @@ bool Piece::operable(int location){
         return true;
 
     if(in_camp(location))
+        return false;
+
+    if(board[location]->team == team)
         return false;
 
     if(!board[location]->clear)
@@ -53,7 +54,7 @@ bool Piece::operable(int location){
     if(identity == 9 || other == 9)
         return true;
     if(other == 11) {
-        if(mine_left == 0) {
+        if(opponent_mine_left == 0) {
             return true;
         } else {
             return false;
@@ -72,8 +73,9 @@ bool Piece::operable(int location){
 
 Piece::Piece(QWidget* parent, int loc, int tm, int id): QPushButton(parent),  identity{id},team{tm}
 {
-    connect(this, &QPushButton::clicked, this, &Piece::test);
+    connect(this, &QPushButton::clicked, this, &Piece::on_click);
     setStyleSheet("border-image:url(:/pic/Resource/unknown) 0px 0px no-repeat;");
+    resize(75, 38);
     location = loc;
     place();
     setCursor(QCursor(Qt::ForbiddenCursor));
@@ -81,93 +83,120 @@ Piece::Piece(QWidget* parent, int loc, int tm, int id): QPushButton(parent),  id
 }
 
 void Piece::test(){
-    this->setStyleSheet("border-image:url(:/pic/Resource/0/0) 0px 0px no-repeat;");
-    QMessageBox::information(this,"test", "set!");
+    this->setStyleSheet("border-image:url(:/pic/Resource/" + QString::number(team) + "/" + QString::number(identity)+ ") 0px 0px no-repeat;");
+    this->clear = true;
 }
 
 void Piece::on_click() {
-    if(!our_tern)
-        return;// emit not your tern
-    if(team != our_team)
-        return;// emit not your team
-    if(identity == 10 || identity == 11)
-        return;// emit not movable
+    remove_hint_renders();
+
+    if(!our_tern){
+        win->information("Now it's not our term.");
+        return;
+    }
+
+    if(our_team == -1 ) {
+        if(clear)
+            return;
+        flip();
+        return;
+    }
 
 
     if(clear) {
+        if(team != our_team) {
+            win->information("This is not your team member.");
+            return;
+        }
+        if(identity == 10) {
+            win->information("Mine cannot move.");
+            return;
+        }
+        if(identity == 11){
+            win->information("Flag cannot move.");
+            return;
+        }
         QList<int> render_list {get_available()};
+        qDebug()<<"Clear: Try to render possible locations"<<render_list.size();
+
         Hinters_cnt = render_list.size();
         Hinters = new StepHint*[Hinters_cnt];
         for(int i = 0; i < Hinters_cnt; ++i) {
-            Hinters[i] = new StepHint(qobject_cast<QWidget*>(this->parent()), render_list[i], this);
+            Hinters[i] = new StepHint(qobject_cast<QWidget*>(win), render_list[i], this);
         }
     } else {
         flip();
-        turn_switch(false);
-        window->send_flip(location);
     }
+}
+
+bool Piece::in_normal(int loc) {
+    for(int i : normal_site) {
+        if(loc == i) {
+            return true;
+        }
+    }
+    return false;
 }
 
 QList<int> Piece::get_available() {
     QList<int> av {};
 
-    for(int i : camp_site) {
-        if(location == i) {
-            int possible_delta[8] = {-6, -5, -4, -1, 1, 4, 5, 6};
-            for(int j = 0; j < 8; ++j) {
-                if(operable(location + possible_delta[j]))
-                    av.push_back(location + possible_delta[j]);
-            }
-            return av;
+    if(in_camp(location)) {
+        qDebug()<<"piece in camp";
+        int possible_delta[8] = {-6, -5, -4, -1, 1, 4, 5, 6};
+        for(int j = 0; j < 8; ++j) {
+            if(operable(location + possible_delta[j]))
+                av.push_back(location + possible_delta[j]);
         }
+        return av;
     }
 
-    for(int i : normal_site) {
-        if(location == i) {
-            int possible_delta[4] = {-5, -1, 1, 5};
-            switch(location){
-            case 1:
-            case 2:
-            case 3:
-                possible_delta[0] = 0;
-                break;
-            case 0:
-                possible_delta[0] = 0;
-                possible_delta[1] = 0;
-                break;
-            case 4:
-                possible_delta[0] = 0;
-                possible_delta[2] = 0;
-                break;
-            case 56:
-            case 57:
-            case 58:
-                possible_delta[3] = 0;
-                break;
-            case 55:
-                possible_delta[1] = 0;
-                possible_delta[3] = 0;
-                break;
-            case 59:
-                possible_delta[2] = 0;
-                possible_delta[3] = 0;
-                break;
-            default:
-                break;
-            }
-            for(int j = 0; j < 4; ++j) {
-                if(j == 0)
-                    continue;
-                if(operable(location + possible_delta[j]))
-                    av.push_back(location + possible_delta[j]);
-            }
+    if(in_normal(location)){
+        int possible_delta[4] = {-5, -1, 1, 5};
+        switch(location){
+        case 1:
+        case 2:
+        case 3:
+            possible_delta[0] = 0;
+            break;
+        case 0:
+            possible_delta[0] = 0;
+            possible_delta[1] = 0;
+            break;
+        case 4:
+            possible_delta[0] = 0;
+            possible_delta[2] = 0;
+            break;
+        case 56:
+        case 57:
+        case 58:
+            possible_delta[3] = 0;
+            break;
+        case 55:
+            possible_delta[1] = 0;
+            possible_delta[3] = 0;
+            break;
+        case 59:
+            possible_delta[2] = 0;
+            possible_delta[3] = 0;
+            break;
+        default:
+            break;
         }
+        for(int delta : possible_delta) {
+            if(delta == 0)
+                continue;
+            if(operable(location + delta))
+                av.push_back(location + delta);
+        }
+        return av;
     }
-    return av;
+
 
     //first get the positions on the railway
     if(identity == 0){
-        memset(search_table, 0, sizeof(bool) * 60);
+        memset(search_table, 0, sizeof(int) * 60);
+        search_table[location] = 1;
         search_along(av, location);
     }
     else
@@ -350,15 +379,15 @@ QList<int>& Piece::go_along(QList<int>& available_list, int cursor, int (*next_o
 }
 
 void Piece::search_further(QList<int>& av, int loc){
-    int* l = (int*) railway_site;
-    if(search_table[loc] == 0 && l[loc] == 1){
+    if(railway_site[loc] == 1 && search_table[loc] == 0){
         search_table[loc] = 1;
         if(is_null(loc)){
             av.push_back(loc);
             search_along(av, loc);
         } else {
-            if(operable(loc))
+            if(operable(loc)){
                 av.push_back(loc);
+            }
         }
     }
 }
@@ -385,22 +414,43 @@ bool Piece::in_camp(int loc) {
     return false;
 }
 
-void Piece::move_to(int loc) {
+void Piece::remove_hint_renders(){
     for(int i = 0; i < Hinters_cnt; ++i) {
         delete Hinters[i];
     }
-    delete Hinters;
+    if(Hinters)
+        delete Hinters;
+
+    Hinters_cnt = 0;
+    Hinters = nullptr;
+}
+
+void Piece::move_to(int loc, bool self) {
+    if(self){
+        turn_switch(false);
+        win->send_move(location, loc);
+    }
+
+    remove_hint_renders();
+
+    board[location] = nullptr;
 
     location = loc;
+
+
 
     //Null situation
     if(is_null(loc)) {
         board[loc] = this;
-        //this->move()
+        this->place();
         return;
     }
 
     int other = board[loc]->identity;
+
+    //when Gongbing romove opponent's mine
+    if(identity == 0 && other ==10)
+        --opponent_mine_left;
 
     //Annihilation
     if(this->identity == 9 || other == 9 || this->identity == other) {
@@ -413,41 +463,57 @@ void Piece::move_to(int loc) {
 
     //Winning situation
     if(other == 11) {
+        board[loc]->hide();
+        board[loc] = this;
+        this->place();
         if(board[loc]->team == our_team)
-            window->lose();
+            win->lose();
         else
-            window->win();
+            win->win();
     }
 
     //Eat
         board[loc]->hide();
-        //this->move();
+        board[loc] = this;
+        this->place();
     return;
 
 }
 
 void Piece::flip(bool self){
     //render effect
-    this->setStyleSheet("border-image:url(:/pic/Resource/" + QString::number(team) + "/" + QString::number(identity)+ ") 0px 0px no-repeat;");
+    this->setStyleSheet("border-image:url(:/pic/Resource/" + QString::number(team) + "/" + QString::number(identity)+ ".png) 0px 0px no-repeat;");
     this->clear = true;
 
-    if(our_team != -1)
-        return;
-
-    if(self && my_prev_flip_team == team){
-        our_team = team;
-        window->our_team_determined(our_team);
+    //undetermined phase judge logic ONLY
+    if(our_team == -1){
+        if(self){
+            if(my_prev_flip_team == team){
+                our_team = team;
+                win->our_team_determined(our_team);
+            } else {
+                my_prev_flip_team = team;
+            }
+        } else {
+            if(opponent_prev_flip_team == team){
+                our_team = team == 1 ? 0 : 1;
+                win->our_team_determined(our_team);
+            }else{
+                opponent_prev_flip_team = team;
+            }
+        }
     }
 
-    if(!self && opponent_prev_flip_team == team){
-        our_team = team == 1 ? 0 : 1;
-        window->our_team_determined(our_team);
+    //common logic
+    if(self){
+        turn_switch(false);
+        win->send_flip(location);
     }
 }
 
 //set location, then move()
 void Piece::place() {
-    this->move(win_x[location % 5], win_y[location / 5]);
+    this->move(win_x[location % 5] - 5, win_y[location / 5] - 5 + 4); // mannual adjustemnt -5
 }
 
 /* init string's format hint
@@ -455,19 +521,30 @@ void Piece::place() {
  * <team> <identity>\n
  * line for camp skipped!!
  */
-void Piece::init_board(QString layout) {
+void Piece::init_board(QString layout, MainWindow* w) {
+    win = w;
     istringstream l (layout.toStdString());
     for(int i = 0; i < 60; ++i){
-        if(in_camp(i))
+        if(in_camp(i)){
             continue;
+            board[i] = nullptr;
+        }
         int tm, id;
         l>>tm>>id;
-        Piece* p = new Piece(window, i, tm, id);
+        Piece* p = new Piece(win, i, tm, id);
+        board[i] = p;
+        p->show();
     }
+    qDebug()<<"init board done";
 }
 
 
 void Piece::turn_switch(bool our_turn){
+    qDebug()<<"Turn"<<our_turn;
+    qDebug()<<"Team"<<our_team;
+
+    win->turn(our_tern);
+
     if(our_turn == Piece::our_tern)
         return;
     Piece::our_tern = our_turn;

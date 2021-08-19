@@ -17,6 +17,8 @@ public:
 private:
     int location;
     Piece* call_back;
+    static const int circ_x[4];
+    static const int circ_y[10];
 protected:
     void mousePressEvent(QMouseEvent*) override;
 };

@@ -1,32 +1,33 @@
 <RCC>
     <qresource prefix="/pic">
-        <file>Resource/0/0</file>
-        <file>Resource/0/1</file>
-        <file>Resource/0/2</file>
-        <file>Resource/0/3</file>
-        <file>Resource/0/4</file>
-        <file>Resource/0/5</file>
-        <file>Resource/0/6</file>
-        <file>Resource/0/7</file>
-        <file>Resource/0/8</file>
-        <file>Resource/0/9</file>
-        <file>Resource/0/10</file>
-        <file>Resource/0/11</file>
-        <file>Resource/1/0</file>
-        <file>Resource/1/1</file>
-        <file>Resource/1/2</file>
-        <file>Resource/1/3</file>
-        <file>Resource/1/4</file>
-        <file>Resource/1/5</file>
-        <file>Resource/1/6</file>
-        <file>Resource/1/7</file>
-        <file>Resource/1/8</file>
-        <file>Resource/1/9</file>
-        <file>Resource/1/10</file>
-        <file>Resource/1/11</file>
         <file>Resource/background</file>
         <file>Resource/unknown</file>
         <file>Resource/circ_filling.png</file>
         <file>Resource/rect_filling.png</file>
+        <file>Resource/not_null_filling.png</file>
+        <file>Resource/1/0.png</file>
+        <file>Resource/1/1.png</file>
+        <file>Resource/1/2.png</file>
+        <file>Resource/1/3.png</file>
+        <file>Resource/1/4.png</file>
+        <file>Resource/1/5.png</file>
+        <file>Resource/1/6.png</file>
+        <file>Resource/1/7.png</file>
+        <file>Resource/1/8.png</file>
+        <file>Resource/1/9.png</file>
+        <file>Resource/1/10.png</file>
+        <file>Resource/1/11.png</file>
+        <file>Resource/0/0.png</file>
+        <file>Resource/0/1.png</file>
+        <file>Resource/0/2.png</file>
+        <file>Resource/0/3.png</file>
+        <file>Resource/0/4.png</file>
+        <file>Resource/0/5.png</file>
+        <file>Resource/0/6.png</file>
+        <file>Resource/0/7.png</file>
+        <file>Resource/0/8.png</file>
+        <file>Resource/0/9.png</file>
+        <file>Resource/0/10.png</file>
+        <file>Resource/0/11.png</file>
     </qresource>
 </RCC>

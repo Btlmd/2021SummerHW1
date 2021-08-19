@@ -44,6 +44,7 @@ private slots:
 
     void read_dispatcher();
 
+    void sck_write(const QByteArray& bytes);
 private:
     Ui::MainWindow *ui;
 

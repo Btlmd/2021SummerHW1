@@ -12,7 +12,6 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    Piece::window = this;
 
 }
 
@@ -27,6 +26,7 @@ void MainWindow::init() {
 }
 
 void MainWindow::connect_to_server(QString IP, int Port) {
+    conn = new QTcpSocket;
     information("Connecting to server...");
     conn->connectToHost(IP, Port);
     connect(conn, &QTcpSocket::connected, [&](){
@@ -49,30 +49,40 @@ void MainWindow::on_actionCreate_connection_as_a_server_triggered()
     //setup server
     QString msg {"A TCP server has been setup locally on port "};
     QString local_possible_ip {};
-    msg += QString::number(server->get_port());
+    msg += QString::number(9999);
     msg += ".\n Depending on your network environment, possible IP address are:\n";
-    auto l = QNetworkInterface::allInterfaces()[0].allAddresses();
+    auto l = QNetworkInterface::allInterfaces().at(0).allAddresses();
+    qDebug()<<l.size();
     for(QHostAddress ip : l) {
         if(ip.toIPv4Address()){
             msg += ip.toString() + "\n";
+            local_possible_ip = ip.toString();
         }
 
     }
+    qDebug()<<"traverse done";
+    if(server){
+        delete server;
+    }
+    server = new Server(9999);
     server->init_server();
     connect_to_server(local_possible_ip, server->get_port());
-    QMessageBox::information(this, "Create server", msg);
+    //QMessageBox::information(this, "Create server", msg);
 }
 
 void MainWindow::read_dispatcher(){
     QString content {conn->readAll()};
 
+    qDebug()<<content;
+
     switch(content[0].toLatin1()) {
-    case 'A':
+    case 'A': // A
         win(true);
         break;
 
     case 'I': // I01 11\n 0 8\n 1 8\n ...
-        Piece::init_board(content.mid(2));
+        qDebug()<<"case I";
+        Piece::init_board(content.mid(2), this);
         if(content[1] == QChar('1')) {
             Piece::turn_switch(true);
         } else {
@@ -90,12 +100,12 @@ void MainWindow::read_dispatcher(){
             to = content.mid(4).toInt();
         }
         qDebug()<<"M: from, to"<<from<<to;
-        Piece::board[from]->move_to(to); // use move_to to update the board configuration
+        Piece::board[from]->move_to(to, false); // use move_to to update the board configuration
         Piece::turn_switch(true);
         break;
 
     case 'F':// F54
-        Piece::board[content.mid(1).toInt()]->flip();
+        Piece::board[content.mid(1).toInt()]->flip(false);
         Piece::turn_switch(true);
         break;
 
@@ -130,7 +140,12 @@ void MainWindow::turn(bool our_turn){
 }
 
 void MainWindow::our_team_determined(int team) {
-
+    QString msg {"Your Side:\n"};
+    if(team == 0)
+        ui->TeamLabel->setText(msg + "<font color=\"red\">RED</font>");
+    else
+        ui->TeamLabel->setText(msg + "<font color=\"blue\">BLUE</font>");
+    ui->TeamLabel->setTextFormat(Qt::RichText);
 }
 
 void MainWindow::information(QString msg) {
@@ -138,15 +153,28 @@ void MainWindow::information(QString msg) {
 }
 
 void MainWindow::send_move(int from, int to) {
-
+    QString msg {"M"};
+    msg += QString::number(from) + " " + QString::number(to);
+    sck_write(msg.toUtf8());
 }
 
 void MainWindow::send_flip(int loc) {
-
+    QString msg {"F"};
+    msg += QString::number(loc);
+    sck_write(msg.toUtf8());
 }
+
 //obsolete: functions replaced by Piece::turn_switch(bool)
 void MainWindow::user_step_done() {
     //cancel the status?? maybe Piece should do this
     //change the words
 
+}
+
+void MainWindow::sck_write(const QByteArray& bytes) {
+
+    qDebug()<<"Client Send" << QString(bytes);
+    conn->write(bytes.data());
+    conn->waitForBytesWritten();
+    qDebug()<<"written!";
 }

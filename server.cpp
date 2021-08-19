@@ -1,4 +1,5 @@
 ﻿#include "server.h"
+#include <QTimer>
 
 Server::Server(int Port, QObject *parent) : QObject(parent), port{Port}
 {
@@ -42,60 +43,63 @@ void Server::init_game(){
         msg[1] += "1";
     }
 
-    msg[0] += random_layout();
-    msg[1] += random_layout();
+    auto layout = random_layout();
 
-    send(0, msg[0]);
-    send(1, msg[1]);
+    msg[0] += layout;
+    msg[1] += layout;
+
+    send(0, msg[0].toUtf8());
+    send(1, msg[1].toUtf8());
 }
 
 void Server::init_server() {
     svr = new QTcpServer(this);
     svr->listen(QHostAddress::Any, port);
     connect(svr, &QTcpServer::newConnection, [&](){
+        qDebug()<<"conn detected.";
         sck[sck_ptr] = svr->nextPendingConnection();
         if(sck_ptr == MAX_SCK) {
+            qDebug()<<"MAX_CASE!";
             delete sck[sck_ptr];
             return;
         }
 
         ip[sck_ptr] = sck[sck_ptr]->peerAddress().toIPv4Address();
+        qDebug()<<"sck_ptr:"<<sck_ptr;
+        int ptr = sck_ptr;
         connect(sck[sck_ptr], &QTcpSocket::readyRead, [=](){
-            read_and_dispatch(sck_ptr);
+            qDebug()<<"sck_ptr_in_lambda:"<<ptr;
+            read_and_dispatch(ptr);
         });
         sck_ptr++;// always point to the place to be written
+
+        if(sck_ptr == 2)
+            QTimer::singleShot(1000, [&](){
+                init_game();
+            });
+
     });
 }
 
 void Server::read_and_dispatch(int index) {
     auto bytes = sck[index]->readAll();
 
+    qDebug()<<"Server Read"<<QString(bytes);
+
     //2-player situation
-    if(index == 1){
-        sck[0]->write(bytes.data());
-        sck[0]->waitForBytesWritten();
-    }
+    if(index == 1)
+        send(0, bytes);
     else
-    {
-        sck[1]->write(bytes.data());
-        sck[1]->waitForBytesWritten();
-    }
+        send(1, bytes);
 
 
-}
-
-bool Server::in_camp(int loc){
-    for(int i : camp_site){
-        if(loc == i)
-            return true;
-    }
-    return false;
 }
 
 Server::~Server(){
 
 }
 
-void Server::send(int client_index, const QString& msg){
-
+void Server::send(int client_index, const QByteArray& bytes){
+    sck[client_index]->write(bytes.data());
+    sck[client_index]->waitForBytesWritten();
 }

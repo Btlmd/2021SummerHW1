@@ -20,9 +20,10 @@ public:
 public slots:
     void test();
     void on_click();
-    void move_to(int loc);
+    void move_to(int loc, bool self = true);
     void flip(bool self = true);
-    inline int get_location() {
+
+    int get_location() {
         return location;
     }
 private:
@@ -33,12 +34,10 @@ private:
     int search_table[60];
     bool operable(int);
     void disappear();
-    bool is_null(int);
+
     void search_along(QList<int>&, int);
     void search_further(QList<int>&, int);
     QList<int>& go_along(QList<int>& available_list, int cursor, int (*next_opeartion)(int), bool (*condition)(int));
-    StepHint** Hinters {nullptr};
-    int Hinters_cnt {0};
     void place();
 
 public:
@@ -47,20 +46,24 @@ public:
     static Piece* board[60];
     static int camp_site[10];
     static int normal_site[18];
-    static int railway_site[5][12];
-    static Piece* step_hint_renderer;
+    static int railway_site[60];
     inline static int locate(int x, int y) {
         return y * 5 + x;
     }
-    static int mine_left;
+    static int opponent_mine_left;
     static bool in_camp(int);
-    static void init_board(QString layout);
+    static void init_board(QString layout, MainWindow* w);
     static int win_y[12];
     static int win_x[5];
     static int my_prev_flip_team;
     static int opponent_prev_flip_team;
-    static MainWindow* window;
+    static MainWindow* win;
     static void turn_switch(bool our_turn);
+    static bool is_null(int);
+    static bool in_normal(int);
+    static void remove_hint_renders();
+    static StepHint** Hinters;
+    static int Hinters_cnt;
 };
 
 #endif // PIECE_H
