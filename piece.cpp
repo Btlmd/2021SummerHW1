@@ -17,7 +17,7 @@ int Piece::railway_site[60] = {0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0
                                1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0};
 Piece* Piece::board[60] = {nullptr};
 bool Piece::our_tern {false};
-int Piece::win_y[12] = {53, 107, 162, 217, 272, 327, 499, 554, 609, 664, 719, 774};
+int Piece::win_y[12] = {113, 167, 222, 277, 332, 387, 559, 614, 669, 724, 779, 834};
 int Piece::win_x[5] = {56, 168, 280, 393, 506};
 int Piece::my_prev_flip_team {-1};
 int Piece::opponent_prev_flip_team {-1};
@@ -27,7 +27,7 @@ bool Piece::is_null(int location) {
 MainWindow* Piece::win {nullptr};
 int Piece::Hinters_cnt {0};
 StepHint** Piece::Hinters {nullptr};
-
+int Piece::step_cnt {0};
 
 bool Piece::operable(int location){
     //It should be previously judged if the piece is movable!!!
@@ -51,8 +51,10 @@ bool Piece::operable(int location){
 
     if(identity <= 8 && other <= 8)
         return identity >= other;
+
     if(identity == 9 || other == 9)
         return true;
+
     if(other == 11) {
         if(opponent_mine_left == 0) {
             return true;
@@ -60,6 +62,7 @@ bool Piece::operable(int location){
             return false;
         }
     }
+
     if(other == 10) {
         if(identity == 0) {
             return true;
@@ -448,8 +451,8 @@ void Piece::move_to(int loc, bool self) {
 
     int other = board[loc]->identity;
 
-    //when Gongbing romove opponent's mine
-    if(identity == 0 && other ==10)
+    //when romoving opponent's mine
+    if(other == 10 && board[loc]->team != our_team)
         --opponent_mine_left;
 
     //Annihilation
@@ -540,9 +543,6 @@ void Piece::init_board(QString layout, MainWindow* w) {
 
 
 void Piece::turn_switch(bool our_turn){
-    qDebug()<<"Turn"<<our_turn;
-    qDebug()<<"Team"<<our_team;
-
     win->turn(our_tern);
 
     if(our_turn == Piece::our_tern)

@@ -88,6 +88,7 @@ void MainWindow::read_dispatcher(){
         } else {
             Piece::turn_switch(false);
         }
+        ui->TeamLabel->setText("Unknown");
         break;
 
     case 'M':// M11 23     M7 22
@@ -133,22 +134,29 @@ void MainWindow::lose(bool from_admit) {
 
 void MainWindow::turn(bool our_turn){
     if(our_turn){
-        ui->TernLabel->setText("Now it's your turn!");
+        ui->TernLabel->setText("You");
     } else {
-        ui->TernLabel->setText("Now it's the other player's turn");
+        ui->TernLabel->setText("Opponent");
     }
 }
 
 void MainWindow::our_team_determined(int team) {
-    QString msg {"Your Side:\n"};
     if(team == 0)
-        ui->TeamLabel->setText(msg + "<font color=\"red\">RED</font>");
+        ui->TeamLabel->setText("<font color=\"red\">RED</font>");
     else
-        ui->TeamLabel->setText(msg + "<font color=\"blue\">BLUE</font>");
+        ui->TeamLabel->setText("<font color=\"blue\">BLUE</font>");
     ui->TeamLabel->setTextFormat(Qt::RichText);
 }
 
 void MainWindow::information(QString msg) {
+
+}
+
+void MainWindow::set_info_default() {
+    QString msg {"Mine to kill: "};
+    msg += QString::number(Piece::opponent_mine_left);
+    msg += "  Total steps: ";
+    msg += QString::number(Piece::step_cnt);
     ui->InfoLabel->setText(msg);
 }
 
@@ -164,12 +172,6 @@ void MainWindow::send_flip(int loc) {
     sck_write(msg.toUtf8());
 }
 
-//obsolete: functions replaced by Piece::turn_switch(bool)
-void MainWindow::user_step_done() {
-    //cancel the status?? maybe Piece should do this
-    //change the words
-
-}
 
 void MainWindow::sck_write(const QByteArray& bytes) {
 

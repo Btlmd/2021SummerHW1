@@ -5,7 +5,7 @@
 #include "mainwindow.h"
 
 const int StepHint::circ_x[4] = {0, 183, 296, 409};
-const int StepHint::circ_y[10] = {0, 0, 139, 193, 246, 0, 0, 532, 587, 642};
+const int StepHint::circ_y[10] = {0, 0, 199, 253, 306, 0, 0, 592, 647, 702};
 
 StepHint::StepHint(QWidget* parent, int loc, Piece* from): QLabel{parent}, call_back{from}, location{loc}
 {    

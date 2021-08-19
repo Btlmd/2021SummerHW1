@@ -24,6 +24,8 @@ public:
 
     void information(QString msg);
 
+    void set_info_default();
+
     void send_move(int from, int to);
 
     void send_flip(int loc);
@@ -33,12 +35,11 @@ public:
     void lose(bool from_admit = false);
 
     void turn(bool our_turn);
+
 private slots:
     void on_actionConnect_to_a_server_triggered();
 
     void on_actionCreate_connection_as_a_server_triggered();
-
-    void user_step_done();
 
     void connect_to_server(QString IP, int Port);
 

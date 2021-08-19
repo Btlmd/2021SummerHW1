@@ -64,6 +64,7 @@ public:
     static void remove_hint_renders();
     static StepHint** Hinters;
     static int Hinters_cnt;
+    static int step_cnt;
 };
 
 #endif // PIECE_H
