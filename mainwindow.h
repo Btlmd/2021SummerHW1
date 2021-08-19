@@ -25,6 +25,7 @@ public:
 
     void information(QString msg, bool lasting = false);
 
+    void game_start();
 
     void send_move(int from, int to);
 
@@ -34,6 +35,7 @@ public:
 
     void set_info_default();
 
+    void disable_all_action();
 private slots:
     void on_actionConnect_to_a_server_triggered();
 
@@ -45,6 +47,12 @@ private slots:
 
     void sck_write(const QByteArray& bytes);
 
+    void on_actionAdmit_defeat_triggered();
+
+    void sck_disconnected_event();
+
+    void on_actionStart_triggered();
+
 private:
     Ui::MainWindow *ui;
 
@@ -55,5 +63,11 @@ private:
     void init();
 
     QTimer* info_show_timer {nullptr};
+
+    bool ready {false};
+
+    bool other_ready {false};
+
+    QString init_info {};
 };
 #endif // MAINWINDOW_H

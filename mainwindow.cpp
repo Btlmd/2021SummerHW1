@@ -15,6 +15,8 @@ MainWindow::MainWindow(QWidget *parent)
     setMinimumSize(size());
     setMaximumSize(size());
     setWindowFlags(Qt::WindowCloseButtonHint);
+    ui->actionAdmit_defeat->setEnabled(false);
+    ui->actionStart->setEnabled(false);
     information("Click <b>Connect</b> to launch a new connection!", true);
 }
 
@@ -29,6 +31,8 @@ void MainWindow::init() {
 }
 
 void MainWindow::connect_to_server(QString IP, int Port, bool from_server) {
+    if(conn != nullptr)
+        delete conn;
     conn = new QTcpSocket;
     information("Connecting to server...", true);
     conn->connectToHost(IP, Port);
@@ -36,11 +40,18 @@ void MainWindow::connect_to_server(QString IP, int Port, bool from_server) {
         if(from_server){
             information("Waiting for the other play to join...", true);
         } else {
-            information("Server connected!");
+            information("Server connected!", true);
+            ui->actionConnect_to_a_server->setEnabled(false);
+            ui->actionCreate_connection_as_a_server->setEnabled(false);
         }
     });
     connect(conn, &QTcpSocket::readyRead, this, &MainWindow::read_dispatcher);
+//    if(!from_server) //Crash! Howcome??
+//        connect(conn, &QTcpSocket::disconnected, this, &MainWindow::sck_disconnected_event);
+}
 
+void MainWindow::sck_disconnected_event() {
+    Piece::end("Network failure!\nGame ended.", "Network failure!  |  Game ended.");
 }
 
 void MainWindow::on_actionConnect_to_a_server_triggered()
@@ -53,13 +64,20 @@ void MainWindow::on_actionConnect_to_a_server_triggered()
 
 void MainWindow::on_actionCreate_connection_as_a_server_triggered()
 {
+    if(server){
+        delete server;
+        server = nullptr;
+        ui->actionCreate_connection_as_a_server->setText("Create connection as a server");
+        ui->actionConnect_to_a_server->setEnabled(true);
+        return;
+    }
+
     //setup server
     QString msg {"A TCP server has been setup locally on port "};
     QString local_possible_ip {};
     msg += QString::number(9999);
     msg += ".\nDepending on your network environment, possible IP address are:\n";
     auto l = QNetworkInterface::allInterfaces().at(0).allAddresses();
-    qDebug()<<l.size();
     for(QHostAddress ip : l) {
         if(ip.toIPv4Address()){
             msg += ip.toString() + "\n";
@@ -67,36 +85,26 @@ void MainWindow::on_actionCreate_connection_as_a_server_triggered()
         }
 
     }
-    qDebug()<<"traverse done";
-    if(server){
-        delete server;
-    }
     server = new Server(9999);
     server->init_server();
     connect_to_server(local_possible_ip, server->get_port(), true);
     QMessageBox::information(this, "Create server", msg);
+    ui->actionCreate_connection_as_a_server->setText("Disable Server");
+    ui->actionConnect_to_a_server->setEnabled(false);
 }
 
 void MainWindow::read_dispatcher(){
     QString content {conn->readAll()};
 
-    qDebug()<<content;
-
     switch(content[0].toLatin1()) {
     case 'A': // A
-        Piece::end("You win!\nYour opponent admitted failure!", "You win! | Your opponent admitted failure!")
+        Piece::end("You win!\nYour opponent admitted defeat!", "You win!  |  Your opponent admitted failure!");
         break;
 
     case 'I': // I01 11\n 0 8\n 1 8\n ...
-        qDebug()<<"case I";
-        Piece::init_board(content.mid(2), this);
-        if(content[1] == QChar('1')) {
-            Piece::turn_switch(true);
-        } else {
-            Piece::turn_switch(false);
-        }
-        ui->TeamLabel->setText("Unknown");
-        set_info_default();
+        init_info = content;
+        ui->actionStart->setEnabled(true);
+        information("Now, get <b>ready</b>!", true);
         break;
 
     case 'M':// M11 23     M7 22
@@ -123,7 +131,29 @@ void MainWindow::read_dispatcher(){
         Piece::turn_switch(true);
         break;
 
+    case 'R': // R
+        other_ready = true;
+        if(ready){
+            game_start();
+        } else {
+            information("Your opponent is ready. Click <b>ready</b> to start the game.", true);
+        }
     }
+}
+
+void MainWindow::game_start(){
+    Piece::init_board(init_info.mid(2), this);
+    if(init_info[1] == QChar('1')) {
+        Piece::turn_switch(true);
+    } else {
+        Piece::turn_switch(false);
+    }
+    ui->TeamLabel->setText("Unknown");
+    information("Now game begin!");
+    ui->actionAdmit_defeat->setEnabled(true);
+    ui->actionStart->setEnabled(false);
+    ui->actionConnect_to_a_server->setEnabled(false);
+    ui->actionCreate_connection_as_a_server->setEnabled(false);
 }
 
 void MainWindow::turn(bool our_turn){
@@ -189,4 +219,31 @@ void MainWindow::sck_write(const QByteArray& bytes) {
     conn->write(bytes.data());
     conn->waitForBytesWritten();
     qDebug()<<"written!";
+}
+
+void MainWindow::on_actionAdmit_defeat_triggered()
+{
+    ui->actionAdmit_defeat->setEnabled(false);
+    sck_write(QString("A").toUtf8());
+    Piece::end("You admitted defeat.");
+}
+
+
+void MainWindow::on_actionStart_triggered()
+{
+    ready = true;
+    ui->actionStart->setEnabled(false);
+    sck_write(QString("R").toUtf8());
+    if(other_ready){
+        game_start();
+    } else {
+        information("Waiting for you opponent to get ready ...", true);
+    }
+}
+
+void MainWindow::disable_all_action(){
+    ui->actionAdmit_defeat->setEnabled(false);
+    ui->actionConnect_to_a_server->setEnabled(false);
+    ui->actionCreate_connection_as_a_server->setEnabled(false);
+    ui->actionStart->setEnabled(false);
 }

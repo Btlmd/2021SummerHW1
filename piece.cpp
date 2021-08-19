@@ -6,6 +6,9 @@
 #include <QChar>
 #include "mainwindow.h"
 #include <sstream>
+#include <QMovie>
+#include <QTimer>
+
 
 using namespace std;
 
@@ -474,7 +477,20 @@ void Piece::move_to(int loc, bool self) {
         board[loc]->hide();
         this->hide();
         board[loc] = nullptr;
-        //annihilating movie to play @ loc
+        qDebug()<<"init_movie";
+        QMovie* mov = new QMovie(":/pic/Resource/explode.gif");
+        QLabel* canvas = new QLabel(win);
+        canvas->setMovie(mov);
+        canvas->resize(75, 38);
+        canvas->move(win_x[location % 5] - 5, win_y[location / 5] - 5 + 4);
+        QTimer::singleShot(800,[canvas, mov](){
+            qDebug()<<"Moive killed";
+            canvas->hide();
+            canvas->deleteLater();
+            delete mov;
+        });
+        canvas->show();
+        mov->start();
         return;
     }
 
@@ -608,4 +624,5 @@ void Piece::end(QString msg_box, QString msg_line){
     cursor_total_disable();
     QMessageBox::information(win, "Military Chess", msg_box);
     win->information(msg_line == "" ? msg_box : msg_line, true);
+    win->disable_all_action();
 }

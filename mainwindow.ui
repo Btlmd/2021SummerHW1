@@ -126,7 +126,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Side :</string>
+     <string>Side:</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -142,7 +142,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Current :</string>
+     <string>Current:</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>

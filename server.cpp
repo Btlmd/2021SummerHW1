@@ -93,7 +93,7 @@ void Server::read_and_dispatch(int index) {
 }
 
 Server::~Server(){
-
+    delete svr;
 }
 
 void Server::send(int client_index, const QByteArray& bytes){

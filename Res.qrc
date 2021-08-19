@@ -31,5 +31,6 @@
         <file>Resource/0/11.png</file>
         <file>Resource/flag_filling.png</file>
         <file>Resource/icon.ico</file>
+        <file>Resource/explode.gif</file>
     </qresource>
 </RCC>

@@ -32,7 +32,7 @@ private:
     int sck_ptr {0};
     int port {9999};
     qint32 ip[MAX_SCK];
-    QTcpServer* svr;
+    QTcpServer* svr {nullptr};
     QTcpSocket* sck[MAX_SCK + 1];
     QString random_layout();
     const int to_be_allocated_type[50] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
