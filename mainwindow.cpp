@@ -22,11 +22,7 @@ MainWindow::~MainWindow()
 
 
 void MainWindow::stop_and_renew_timer() {
-    if(game_timer){
-        if(game_timer->isActive())
-            game_timer->stop();
-        game_timer->deleteLater();
-    }
+    stop_game_timer();
     set_timer_init();
 }
 
@@ -60,11 +56,12 @@ void MainWindow::timer_second_up_check() {
 void MainWindow::other_possibly_timeout_network_check() {
     qDebug()<<"Begin syncing network check";
     network_satus_sync_timer = new QTimer(this);
-    network_satus_sync_timer->setInterval(500);
+    network_satus_sync_timer->setInterval(1000);
     network_satus_sync_timer->setTimerType(Qt::PreciseTimer);
     connect(network_satus_sync_timer, &QTimer::timeout, [&](){
         sck_disconnected_event();
     });
+    network_satus_sync_timer->start();
 }
 
 void MainWindow::init() {
@@ -110,12 +107,13 @@ void MainWindow::connect_to_server(QString IP, int Port, bool from_server) {
         }
     });
     connect(conn, &QTcpSocket::readyRead, this, &MainWindow::read_dispatcher);
-//    if(!from_server) //Crash! Howcome??
-//        connect(conn, &QTcpSocket::disconnected, this, &MainWindow::sck_disconnected_event);
+    if(!from_server)
+        connect(conn, &QTcpSocket::disconnected, this, &MainWindow::sck_disconnected_event);
 }
 
 void MainWindow::sck_disconnected_event() {
-    Piece::end("Network failure!\nGame ended.", "Network failure!  |  Game ended.");
+    if(!Piece::ended)
+        Piece::end("Network failure!\nGame ended.", "Network failure!  |  Game ended.");
 }
 
 void MainWindow::on_actionConnect_to_a_server_triggered()
@@ -162,7 +160,7 @@ void MainWindow::read_dispatcher(){
 
     switch(content[0].toLatin1()) {
     case 'A': // A
-        Piece::end("You win!\nYour opponent admitted defeat!", "You win!  |  Your opponent admitted failure!");
+        Piece::end("You win!\nYour opponent admitted defeat!", "You win!  |  Your opponent admitted defeat!");
         break;
 
     case 'I': // I01 11\n 0 8\n 1 8\n ...
@@ -192,27 +190,15 @@ void MainWindow::read_dispatcher(){
         break;
 
     case 'T':// T
-        if(network_satus_sync_timer){
-            network_satus_sync_timer->stop();
-            network_satus_sync_timer->deleteLater();
-            network_satus_sync_timer = nullptr;
-        }
+        stop_network_sync_timer();
         stop_and_renew_timer();
         information("<font color=\"red\">Opponent time out!</font>");
         Piece::turn_switch(true);
         break;
 
     case 'S':// S
-        if(network_satus_sync_timer){
-            network_satus_sync_timer->stop();
-            network_satus_sync_timer->deleteLater();
-            network_satus_sync_timer = nullptr;
-        }
-        if(game_timer){
-            game_timer->stop();
-            game_timer->deleteLater();
-            game_timer = nullptr;
-        }
+        stop_game_timer();
+        stop_network_sync_timer();
         Piece::end("You win!\nYour opponent run out of time for 3 times.", "You win!  |  Your opponent run out of time for 3 times.");
         break;
 
@@ -245,7 +231,7 @@ void MainWindow::game_start(){
 
 void MainWindow::turn(bool our_turn){
     if(our_turn){
-        ui->TernLabel->setText("You");
+        ui->TernLabel->setText("<b>You</b>");
     } else {
         ui->TernLabel->setText("Opponent");
     }
@@ -301,11 +287,8 @@ void MainWindow::send_flip(int loc) {
 
 
 void MainWindow::sck_write(const QByteArray& bytes) {
-
-    qDebug()<<"Client Send" << QString(bytes);
     conn->write(bytes.data());
     conn->waitForBytesWritten();
-    qDebug()<<"written!";
 }
 
 void MainWindow::on_actionAdmit_defeat_triggered()
@@ -333,4 +316,30 @@ void MainWindow::disable_all_action(){
     ui->actionConnect_to_a_server->setEnabled(false);
     ui->actionCreate_connection_as_a_server->setEnabled(false);
     ui->actionStart->setEnabled(false);
+}
+
+
+void MainWindow::stop_game_timer(){
+    if(game_timer){
+        if(game_timer->isActive())
+            game_timer->stop();
+        game_timer->deleteLater();
+        game_timer = nullptr;
+    }
+}
+
+void MainWindow::stop_network_sync_timer(){
+    if(network_satus_sync_timer){
+        if(network_satus_sync_timer->isActive())
+            network_satus_sync_timer->stop();
+        network_satus_sync_timer->deleteLater();
+        network_satus_sync_timer = nullptr;
+    }
+}
+
+void MainWindow::end_game_window_actions(){
+    disable_all_action();
+    stop_game_timer();
+    stop_network_sync_timer();
+    ui->TernLabel->hide();
 }

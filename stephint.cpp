@@ -10,7 +10,7 @@ const int StepHint::circ_y[10] = {0, 0, 199, 253, 306, 0, 0, 592, 647, 702};
 StepHint::StepHint(QWidget* parent, int loc, Piece* from): QLabel{parent}, call_back{from}, location{loc}
 {    
     if(Piece::in_camp(loc)) {
-        QPixmap bg(":/pic/Resource/circ_filling");
+        QPixmap bg(":/pic/Resource/circ_filling.png");
         setPixmap(bg.scaled(42, 42, Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
         resize(42, 42);
         move(circ_x[location % 5] - 5 + 5 - 4 + 2, circ_y[location / 5] - 5 + 23);

@@ -59,6 +59,11 @@ private slots:
 public slots:
     void stop_and_renew_timer();
 
+    void stop_game_timer();
+
+    void stop_network_sync_timer();
+
+    void end_game_window_actions();
 public: signals:
     void time_update(int);
 

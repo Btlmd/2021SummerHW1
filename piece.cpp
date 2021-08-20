@@ -30,6 +30,7 @@ StepHint** Piece::Hinters {nullptr};
 int Piece::step_cnt {0};
 bool Piece::ended {false};
 int Piece::our_timeout_cnt {0};
+QLabel* Piece::last_step_hinter {nullptr};
 
 
 bool Piece::is_null(int location) {
@@ -86,7 +87,7 @@ bool Piece::operable(int location){
 Piece::Piece(QWidget* parent, int loc, int tm, int id): QPushButton(parent),  identity{id},team{tm}
 {
     connect(this, &QPushButton::clicked, this, &Piece::on_click);
-    setStyleSheet("border-image:url(:/pic/Resource/unknown) 0px 0px no-repeat;");
+    setStyleSheet("border-image:url(:/pic/Resource/unknown.png) 0px 0px no-repeat;");
     resize(75, 38);
     location = loc;
     place();
@@ -132,16 +133,18 @@ void Piece::on_click() {
             win->information("Flag cannot move.");
             return;
         }
-        QList<int> render_list {get_available()};
-        qDebug()<<"Clear: Try to render possible locations"<<render_list.size();
-
-        Hinters_cnt = render_list.size();
-        Hinters = new StepHint*[Hinters_cnt];
-        for(int i = 0; i < Hinters_cnt; ++i) {
-            Hinters[i] = new StepHint(qobject_cast<QWidget*>(win), render_list[i], this);
-        }
+        render_step_hinters(this);
     } else {
         flip();
+    }
+}
+
+void Piece::render_step_hinters(Piece* p){
+    QList<int> render_list {p->get_available()};
+    Hinters_cnt = render_list.size();
+    Hinters = new StepHint*[Hinters_cnt];
+    for(int i = 0; i < Hinters_cnt; ++i) {
+        Hinters[i] = new StepHint(qobject_cast<QWidget*>(win), render_list[i], p);
     }
 }
 
@@ -218,7 +221,7 @@ QList<int> Piece::get_available() {
     else
     {
         //paralle situation1: left & right
-        int para1[14] = {6, 7, 8, 26, 28, 31, 33, 51, 52, 53, 5, 9, 50, 54};
+        int para1[16] = {6, 7, 8, 26, 28, 31, 33, 51, 52, 53, 5, 9, 50, 54, 27, 32};
         for(int loc : para1) {
             if(location == loc){
                 go_along(av, loc - 1, [](int cur){return cur - 1;}, [](int cur){return (cur % 5) != 4;});
@@ -441,6 +444,28 @@ void Piece::remove_hint_renders(){
     Hinters = nullptr;
 }
 
+void Piece::render_hint_at(int loc) {
+    remove_last_step_hinter();
+    qDebug()<<"last hint rendered @"<<loc;
+    last_step_hinter = new QLabel(win);
+    QPixmap bg(":/pic/Resource/opponent_operation_hint.png");
+    last_step_hinter->setPixmap(bg);
+    last_step_hinter->resize(bg.width(), bg.height());
+    last_step_hinter->move(win_x[loc % 5] - 5 - 6, win_y[loc / 5] - 5 + 4 - 6);
+    if(board[loc] != nullptr){
+        last_step_hinter->stackUnder(board[loc]);
+    }
+    last_step_hinter->show();
+}
+
+void Piece::remove_last_step_hinter() {
+    if(last_step_hinter){
+        last_step_hinter->hide();
+        last_step_hinter->deleteLater();
+        last_step_hinter = nullptr;
+    }
+}
+
 void Piece::move_to(int loc, bool self) {
     if(self){
         turn_switch(false);
@@ -462,15 +487,26 @@ void Piece::move_to(int loc, bool self) {
     if(is_null(loc)) {
         board[loc] = this;
         this->place();
+        render_hint_at(loc);
         return;
     }
 
     int other = board[loc]->identity;
 
-    //when romoving opponent's mine
+    //when romoving opponent's mine, update counter
     if(other == 10 && board[loc]->team != our_team){
         --opponent_mine_left;
-        qDebug()<<"Decrease opppnent mine left"<< opponent_mine_left;
+    }
+
+    //Winning situation
+    if(other == 11) {
+        board[loc]->hide();
+        this->place();
+        render_hint_at(loc);
+        if(board[loc]->team == our_team)
+            end("You lose.");
+        else
+            end("You win!");
     }
 
     //Annihilation
@@ -478,6 +514,8 @@ void Piece::move_to(int loc, bool self) {
         board[loc]->hide();
         this->hide();
         board[loc] = nullptr;
+
+        remove_last_step_hinter();
         QMovie* mov = new QMovie(":/pic/Resource/explode.gif");
         QLabel* canvas = new QLabel(win);
         canvas->setMovie(mov);
@@ -493,20 +531,13 @@ void Piece::move_to(int loc, bool self) {
         return;
     }
 
-    //Winning situation
-    if(other == 11) {
-        board[loc]->hide();
-        this->place();
-        if(board[loc]->team == our_team)
-            end("You lose.");
-        else
-            end("You win!");
-    }
+
 
     //Eat
         board[loc]->hide();
         board[loc] = this;
         this->place();
+        render_hint_at(loc);
     return;
 
 }
@@ -519,6 +550,8 @@ void Piece::flip(bool self){
     win->set_info_default();
 
     emit make_movement();
+
+    render_hint_at(location);
 
     //undetermined phase judge logic ONLY
     if(our_team == -1){
@@ -623,7 +656,7 @@ void Piece::cursor_total_disable(){
 void Piece::end(QString msg_box, QString msg_line){
     ended = true;
     cursor_total_disable();
+    win->end_game_window_actions();
     QMessageBox::information(win, "Military Chess", msg_box);
     win->information(msg_line == "" ? msg_box : msg_line, true);
-    win->disable_all_action();
 }

@@ -72,10 +72,14 @@ public:
     static StepHint** Hinters;
     static int Hinters_cnt;
     static int step_cnt;
+    static QLabel* last_step_hinter;
     static void cursor_total_disable();
     static bool ended;
     static void end(QString msg_box, QString msg_line = "");
     static int our_timeout_cnt;
+    static void render_hint_at(int);
+    static void remove_last_step_hinter();
+    static void render_step_hinters(Piece*);
 };
 
 #endif // PIECE_H

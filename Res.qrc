@@ -1,7 +1,5 @@
 <RCC>
     <qresource prefix="/pic">
-        <file>Resource/background</file>
-        <file>Resource/unknown</file>
         <file>Resource/circ_filling.png</file>
         <file>Resource/rect_filling.png</file>
         <file>Resource/not_null_filling.png</file>
@@ -32,5 +30,8 @@
         <file>Resource/flag_filling.png</file>
         <file>Resource/icon.ico</file>
         <file>Resource/explode.gif</file>
+        <file>Resource/opponent_operation_hint.png</file>
+        <file>Resource/background.png</file>
+        <file>Resource/unknown.png</file>
     </qresource>
 </RCC>

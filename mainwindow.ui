@@ -62,7 +62,7 @@
      <string/>
     </property>
     <property name="pixmap">
-     <pixmap resource="res.qrc">:/pic/Resource/background</pixmap>
+     <pixmap resource="res.qrc">:/pic/Resource/background.png</pixmap>
     </property>
     <property name="scaledContents">
      <bool>false</bool>
@@ -104,7 +104,7 @@
     <property name="geometry">
      <rect>
       <x>50</x>
-      <y>10</y>
+      <y>14</y>
       <width>461</width>
       <height>31</height>
      </rect>
