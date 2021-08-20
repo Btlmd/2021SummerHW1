@@ -12,6 +12,9 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
+class Chess;
+class Piece;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -59,6 +62,10 @@ private slots:
 public slots:
     void stop_and_renew_timer();
 
+    void stop_game_timer();
+
+    void stop_network_sync_timer();
+
 public: signals:
     void time_update(int);
 
@@ -91,7 +98,7 @@ private:
 
     void new_one_second();
 
-
+    Chess game {this};
 
 };
 #endif // MAINWINDOW_H
