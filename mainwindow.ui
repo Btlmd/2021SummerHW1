@@ -145,6 +145,7 @@
     </property>
     <addaction name="actionCreate_connection_as_a_server"/>
     <addaction name="actionConnect_to_a_server"/>
+    <addaction name="actionDisconnect"/>
    </widget>
    <widget class="QMenu" name="menuPlay">
     <property name="title">
@@ -175,6 +176,11 @@
   <action name="actionAdmit_defeat">
    <property name="text">
     <string>Admit defeat</string>
+   </property>
+  </action>
+  <action name="actionDisconnect">
+   <property name="text">
+    <string>Disconnect</string>
    </property>
   </action>
  </widget>

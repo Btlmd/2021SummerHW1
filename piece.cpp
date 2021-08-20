@@ -493,7 +493,7 @@ void Piece::move_to(int loc, bool self) {
         //Winning situation
         if(other == 11) {
             board[loc]->hide();
-            board[loc] = this;
+            //board[loc] = this;
             this->place();
             render_hint_at(loc);
             if(board[loc]->team == our_team)
@@ -695,4 +695,5 @@ void Piece::end(QString msg_box, QString msg_line){
     win->end_game_window_actions();
     QMessageBox::information(win, "Military Chess", msg_box);
     win->information(msg_line == "" ? msg_box : msg_line, true);
+    win->end_game_window_actions();
 }

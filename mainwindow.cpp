@@ -70,6 +70,7 @@ void MainWindow::init() {
     setWindowFlags(Qt::WindowCloseButtonHint);
     ui->actionAdmit_defeat->setEnabled(false);
     ui->actionStart->setEnabled(false);
+    ui->actionDisconnect->setEnabled(false);
     information("Click <b>Connect</b> to launch a new connection!", true);
     ui->TimeLeftLCD->hide();
     connect(this, SIGNAL(time_update(int)), ui->TimeLeftLCD, SLOT(display(int)));
@@ -101,6 +102,7 @@ void MainWindow::connect_to_server(QString IP, int Port, bool from_server) {
     information("Connecting to server...", true);
     conn->connectToHost(IP, Port);
     connect(conn, &QTcpSocket::connected, [=](){
+        qDebug()<<"Client socket connected";
         if(from_server){
             information("Waiting for the other play to join...", true);
         } else {
@@ -110,13 +112,21 @@ void MainWindow::connect_to_server(QString IP, int Port, bool from_server) {
         }
     });
     connect(conn, &QTcpSocket::readyRead, this, &MainWindow::read_dispatcher);
-    if(!from_server)
-        connect(conn, &QTcpSocket::disconnected, this, &MainWindow::sck_disconnected_event);
+    connect(conn, &QTcpSocket::disconnected, this, &MainWindow::sck_disconnected_event);
 }
 
 void MainWindow::sck_disconnected_event() {
-    if(!Piece::ended)
-        Piece::end("Network failure!\nGame ended.", "Network failure!  |  Game ended.");
+    if(!Piece::ended){
+        QString msg {"You have disconnect with your partner."};
+        if(game_started)
+            Piece::end(msg);
+        else
+        {
+            QMessageBox::information(this, "Military Chess", msg);
+            information(msg, true);
+            disable_all_action();
+        }
+    }
 }
 
 void MainWindow::on_actionConnect_to_a_server_triggered()
@@ -129,14 +139,6 @@ void MainWindow::on_actionConnect_to_a_server_triggered()
 
 void MainWindow::on_actionCreate_connection_as_a_server_triggered()
 {
-    if(server){
-        delete server;
-        server = nullptr;
-        ui->actionCreate_connection_as_a_server->setText("Create connection as a server");
-        ui->actionConnect_to_a_server->setEnabled(true);
-        return;
-    }
-
     //setup server
     QString msg {"A TCP server has been setup locally on port "};
     QString local_possible_ip {};
@@ -150,11 +152,11 @@ void MainWindow::on_actionCreate_connection_as_a_server_triggered()
         }
 
     }
-    server = new Server(9999);
+    server = new Server(9999, this);
     server->init_server();
     connect_to_server(local_possible_ip, server->get_port(), true);
     QMessageBox::information(this, "Create server", msg);
-    ui->actionCreate_connection_as_a_server->setText("Disable Server");
+    ui->actionCreate_connection_as_a_server->setEnabled(false);
     ui->actionConnect_to_a_server->setEnabled(false);
 }
 
@@ -171,6 +173,7 @@ void MainWindow::read_dispatcher(){
         ui->actionStart->setEnabled(true);
         ui->actionCreate_connection_as_a_server->setDisabled(false);
         information("Now, get <b>ready</b>!", true);
+        ui->actionDisconnect->setEnabled(true);
         break;
 
     case 'M':// M11 23     M7 22
@@ -213,6 +216,10 @@ void MainWindow::read_dispatcher(){
             information("Your opponent is ready. Click <b>ready</b> to start the game.", true);
         }
         break;
+
+    case 'D':
+        conn->disconnectFromHost();
+        break;
     }
 }
 
@@ -225,11 +232,12 @@ void MainWindow::game_start(){
     }
     ui->TeamLabel->setText("Unknown");
     information("Now game begin!");
-    ui->actionAdmit_defeat->setEnabled(true);
+    //ui->actionAdmit_defeat->setEnabled(true);
     ui->actionStart->setEnabled(false);
     ui->actionConnect_to_a_server->setEnabled(false);
     ui->actionCreate_connection_as_a_server->setEnabled(false);
     set_timer_init();
+    game_started = true;
 }
 
 void MainWindow::turn(bool our_turn){
@@ -266,6 +274,9 @@ void MainWindow::information(QString msg, bool lasting) {
 }
 
 void MainWindow::set_info_default() {
+    if(Piece::step_cnt >= 20)
+        ui->actionAdmit_defeat->setEnabled(true);
+
     QString msg {"Mine to kill: "};
     msg += QString::number(Piece::opponent_mine_left);
     msg += "   Total steps: ";
@@ -319,6 +330,7 @@ void MainWindow::disable_all_action(){
     ui->actionConnect_to_a_server->setEnabled(false);
     ui->actionCreate_connection_as_a_server->setEnabled(false);
     ui->actionStart->setEnabled(false);
+    ui->actionDisconnect->setEnabled(false);
 }
 
 
@@ -346,3 +358,12 @@ void MainWindow::end_game_window_actions(){
     stop_network_sync_timer();
     ui->TernLabel->hide();
 }
+
+void MainWindow::on_actionDisconnect_triggered()
+{
+    if(conn){
+        if(conn->isWritable())sck_write(QString("D").toUtf8());
+        conn->disconnectFromHost();
+    }
+}
+

@@ -56,6 +56,8 @@ private slots:
     void timer_second_up_check();
 
     void other_possibly_timeout_network_check();
+    void on_actionDisconnect_triggered();
+
 public slots:
     void stop_and_renew_timer();
 
@@ -98,6 +100,7 @@ private:
 
     QLabel* back_ground {nullptr};
 
+    bool game_started {false};
 
 };
 #endif // MAINWINDOW_H

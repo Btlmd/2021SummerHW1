@@ -68,6 +68,10 @@ void Server::init_server() {
         connect(sck[sck_ptr], &QTcpSocket::readyRead, [=](){
             read_and_dispatch(ptr);
         });
+
+        connect(sck[sck_ptr], &QTcpSocket::disconnected, [=](){
+            qDebug()<<"Server detect disconnection";
+        });
         sck_ptr++;// always point to the place to be written
 
         if(sck_ptr == 2)
@@ -97,6 +101,11 @@ Server::~Server(){
 }
 
 void Server::send(int client_index, const QByteArray& bytes){
+    if(!sck[client_index])
+        return;
+
+    if(!sck[client_index]->isWritable())
+        return;
     sck[client_index]->write(bytes.data());
     sck[client_index]->waitForBytesWritten();
 }
