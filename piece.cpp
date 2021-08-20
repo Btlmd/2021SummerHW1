@@ -468,11 +468,11 @@ void Piece::remove_last_step_hinter() {
 
 void Piece::move_to(int loc, bool self) {
     if(self){
-        turn_switch(false);
         win->send_move(location, loc);
     }
 
     ++step_cnt;
+
     win->set_info_default();
 
     remove_hint_renders();
@@ -483,63 +483,63 @@ void Piece::move_to(int loc, bool self) {
 
     emit make_movement();
 
-    //Null situation
     if(is_null(loc)) {
+        //Null situation
         board[loc] = this;
         this->place();
         render_hint_at(loc);
-        return;
+    } else {
+        int other = board[loc]->identity;
+        //Winning situation
+        if(other == 11) {
+            board[loc]->hide();
+            board[loc] = this;
+            this->place();
+            render_hint_at(loc);
+            if(board[loc]->team == our_team)
+                end("You lose.");
+            else
+                end("You win!");
+            return;
+        } else {
+
+            //when romoving opponent's mine, update counter
+            if(other == 10 && board[loc]->team != our_team){
+                --opponent_mine_left;
+            }
+
+            //Annihilation
+            if(this->identity == 9 || other == 9 || this->identity == other) {
+                board[loc]->hide();
+                this->hide();
+                board[loc] = nullptr;
+
+                remove_last_step_hinter();
+                QMovie* mov = new QMovie(":/pic/Resource/explode.gif");
+                QLabel* canvas = new QLabel(win);
+                canvas->setMovie(mov);
+                canvas->resize(75, 38);
+                canvas->move(win_x[location % 5] - 5, win_y[location / 5] - 5 + 4);
+                QTimer::singleShot(800,[canvas, mov](){
+                    canvas->hide();
+                    canvas->deleteLater();
+                    delete mov;
+                });
+                canvas->show();
+                mov->start();
+
+            } else {
+
+            //Eat
+                board[loc]->hide();
+                board[loc] = this;
+                this->place();
+                render_hint_at(loc);
+            }
+        }
     }
 
-    int other = board[loc]->identity;
-
-    //when romoving opponent's mine, update counter
-    if(other == 10 && board[loc]->team != our_team){
-        --opponent_mine_left;
-    }
-
-    //Winning situation
-    if(other == 11) {
-        board[loc]->hide();
-        this->place();
-        render_hint_at(loc);
-        if(board[loc]->team == our_team)
-            end("You lose.");
-        else
-            end("You win!");
-    }
-
-    //Annihilation
-    if(this->identity == 9 || other == 9 || this->identity == other) {
-        board[loc]->hide();
-        this->hide();
-        board[loc] = nullptr;
-
-        remove_last_step_hinter();
-        QMovie* mov = new QMovie(":/pic/Resource/explode.gif");
-        QLabel* canvas = new QLabel(win);
-        canvas->setMovie(mov);
-        canvas->resize(75, 38);
-        canvas->move(win_x[location % 5] - 5, win_y[location / 5] - 5 + 4);
-        QTimer::singleShot(800,[canvas, mov](){
-            canvas->hide();
-            canvas->deleteLater();
-            delete mov;
-        });
-        canvas->show();
-        mov->start();
-        return;
-    }
-
-
-
-    //Eat
-        board[loc]->hide();
-        board[loc] = this;
-        this->place();
-        render_hint_at(loc);
-    return;
-
+    turn_switch(false);
 }
 
 void Piece::flip(bool self){
@@ -606,12 +606,48 @@ void Piece::init_board(QString layout, MainWindow* w) {
     qDebug()<<"init board done";
 }
 
+bool Piece::check_movable(int t){
+    for(Piece* p : board){
+        if(p) {
+            if(p->clear == false)
+                return true;
+
+            if(p->team == t && p->identity != 10 && p->identity != 11) {
+                auto av = p->get_available();
+                if(av.size() != 0)
+                    return true;
+            }
+        }
+    }
+    return false;
+}
 
 void Piece::turn_switch(bool ot){
+    if(ended)
+        return;
+
     win->turn(ot);
+
+    remove_hint_renders();
+
+    int team_to_check;
+    if(ot) {
+        team_to_check = our_team;
+    } else {
+        team_to_check = our_team == 0 ? 1 : 0;
+    }
+
+    if(!check_movable(team_to_check)) {
+        if(ot)
+            end("You lose.\nYou have no piece to move.", "You lose.  |  You have no piece to move.");
+        else
+            end("You win!\nYour opponent have no piece to move.", "You win!  |  Your opponent have no piece to move.");
+    }
+
 
     if(ot == our_tern)
         return;
+
     Piece::our_tern = ot;
 
     if(our_tern){

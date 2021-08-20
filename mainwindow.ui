@@ -49,25 +49,6 @@
      <number>2</number>
     </property>
    </widget>
-   <widget class="QLabel" name="BackgroundLabel">
-    <property name="geometry">
-     <rect>
-      <x>50</x>
-      <y>80</y>
-      <width>541</width>
-      <height>781</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-    <property name="pixmap">
-     <pixmap resource="res.qrc">:/pic/Resource/background.png</pixmap>
-    </property>
-    <property name="scaledContents">
-     <bool>false</bool>
-    </property>
-   </widget>
    <widget class="QLabel" name="TernLabel">
     <property name="geometry">
      <rect>

@@ -80,6 +80,7 @@ public:
     static void render_hint_at(int);
     static void remove_last_step_hinter();
     static void render_step_hinters(Piece*);
+    static bool check_movable(int);
 };
 
 #endif // PIECE_H

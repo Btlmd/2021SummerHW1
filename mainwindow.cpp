@@ -4,7 +4,7 @@
 #include "clientsettings.h"
 #include <QNetworkInterface>
 #include <QByteArray>
-
+#include "boardlabel.h"
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -73,9 +73,12 @@ void MainWindow::init() {
     information("Click <b>Connect</b> to launch a new connection!", true);
     ui->TimeLeftLCD->hide();
     connect(this, SIGNAL(time_update(int)), ui->TimeLeftLCD, SLOT(display(int)));
+    back_ground = new BoardLabel(this);
 }
 
 void MainWindow::set_timer_init(){
+    if(Piece::ended)
+        return;
     time_left = time_out;
     ui->TimeLeftLCD->display(time_left);
     ui->TimeLeftLCD->show();

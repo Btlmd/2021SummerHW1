@@ -96,6 +96,7 @@ private:
 
     void new_one_second();
 
+    QLabel* back_ground {nullptr};
 
 
 };
