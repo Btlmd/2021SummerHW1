@@ -26,9 +26,8 @@ void MainWindow::stop_and_renew_timer() {
         if(game_timer->isActive())
             game_timer->stop();
         game_timer->deleteLater();
-
-        set_timer_init();
     }
+    set_timer_init();
 }
 
 void MainWindow::timer_second_up_check() {
@@ -48,6 +47,7 @@ void MainWindow::timer_second_up_check() {
                 information("<font color=\"red\"><b>YOUR TIME RUN OUT!&nbsp;</b></font><font color=\"black\"><b>Now it's you opponent's turn.</b></font>");
                 sck_write(QString("T").toUtf8());
                 Piece::turn_switch(false);
+                set_timer_init();
             }
         } else {
             other_possibly_timeout_network_check();
@@ -79,9 +79,9 @@ void MainWindow::init() {
 }
 
 void MainWindow::set_timer_init(){
-    ui->TimeLeftLCD->show();
     time_left = time_out;
     ui->TimeLeftLCD->display(time_left);
+    ui->TimeLeftLCD->show();
     new_one_second();
 }
 
@@ -168,6 +168,7 @@ void MainWindow::read_dispatcher(){
     case 'I': // I01 11\n 0 8\n 1 8\n ...
         init_info = content;
         ui->actionStart->setEnabled(true);
+        ui->actionCreate_connection_as_a_server->setDisabled(false);
         information("Now, get <b>ready</b>!", true);
         break;
 
@@ -191,19 +192,29 @@ void MainWindow::read_dispatcher(){
         break;
 
     case 'T':// T
+        if(network_satus_sync_timer){
+            network_satus_sync_timer->stop();
+            network_satus_sync_timer->deleteLater();
+            network_satus_sync_timer = nullptr;
+        }
         stop_and_renew_timer();
         information("<font color=\"red\">Opponent time out!</font>");
         Piece::turn_switch(true);
         break;
 
     case 'S':// S
-        network_satus_sync_timer->stop();
-        network_satus_sync_timer->deleteLater();
-        network_satus_sync_timer = nullptr;
-        game_timer->stop();
-        game_timer->deleteLater();
-        game_timer = nullptr;
+        if(network_satus_sync_timer){
+            network_satus_sync_timer->stop();
+            network_satus_sync_timer->deleteLater();
+            network_satus_sync_timer = nullptr;
+        }
+        if(game_timer){
+            game_timer->stop();
+            game_timer->deleteLater();
+            game_timer = nullptr;
+        }
         Piece::end("You win!\nYour opponent run out of time for 3 times.", "You win!  |  Your opponent run out of time for 3 times.");
+        break;
 
     case 'R': // R
         other_ready = true;
@@ -213,8 +224,6 @@ void MainWindow::read_dispatcher(){
             information("Your opponent is ready. Click <b>ready</b> to start the game.", true);
         }
         break;
-
-    case '
     }
 }
 
@@ -231,6 +240,7 @@ void MainWindow::game_start(){
     ui->actionStart->setEnabled(false);
     ui->actionConnect_to_a_server->setEnabled(false);
     ui->actionCreate_connection_as_a_server->setEnabled(false);
+    set_timer_init();
 }
 
 void MainWindow::turn(bool our_turn){
@@ -269,10 +279,10 @@ void MainWindow::information(QString msg, bool lasting) {
 void MainWindow::set_info_default() {
     QString msg {"Mine to kill: "};
     msg += QString::number(Piece::opponent_mine_left);
-    msg += "  Total steps: ";
+    msg += "   Total steps: ";
     msg += QString::number(Piece::step_cnt);
     if(Piece::our_timeout_cnt != 0)
-        msg += " Timeout count: "+QString::number(Piece::our_timeout_cnt);
+        msg += "   Timeout count: "+QString::number(Piece::our_timeout_cnt);
 
     ui->InfoLabel->setText(msg);
 }
