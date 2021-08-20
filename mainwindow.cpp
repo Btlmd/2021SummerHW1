@@ -12,12 +12,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    setMinimumSize(size());
-    setMaximumSize(size());
-    setWindowFlags(Qt::WindowCloseButtonHint);
-    ui->actionAdmit_defeat->setEnabled(false);
-    ui->actionStart->setEnabled(false);
-    information("Click <b>Connect</b> to launch a new connection!", true);
+    init();
 }
 
 MainWindow::~MainWindow()
@@ -26,8 +21,77 @@ MainWindow::~MainWindow()
 }
 
 
-void MainWindow::init() {
+void MainWindow::stop_and_renew_timer() {
+    if(game_timer){
+        if(game_timer->isActive())
+            game_timer->stop();
+        game_timer->deleteLater();
 
+        set_timer_init();
+    }
+}
+
+void MainWindow::timer_second_up_check() {
+    game_timer->deleteLater();
+    game_timer = nullptr;
+    --time_left;
+    emit time_update(time_left);
+
+    if(time_left == 0) {
+        if(Piece::our_tern){
+            ++Piece::our_timeout_cnt;
+
+            if(Piece::our_timeout_cnt == 3){
+                sck_write(QString("S").toUtf8());
+                Piece::end("You lose!\n You run out of time for 3 times.", "You lose!  |  You run out of time for 3 times.");
+            } else {
+                information("<font color=\"red\"><b>YOUR TIME RUN OUT!&nbsp;</b></font><font color=\"black\"><b>Now it's you opponent's turn.</b></font>");
+                sck_write(QString("T").toUtf8());
+                Piece::turn_switch(false);
+            }
+        } else {
+            other_possibly_timeout_network_check();
+        }
+    } else {
+        new_one_second();
+    }
+}
+
+void MainWindow::other_possibly_timeout_network_check() {
+    qDebug()<<"Begin syncing network check";
+    network_satus_sync_timer = new QTimer(this);
+    network_satus_sync_timer->setInterval(500);
+    network_satus_sync_timer->setTimerType(Qt::PreciseTimer);
+    connect(network_satus_sync_timer, &QTimer::timeout, [&](){
+        sck_disconnected_event();
+    });
+}
+
+void MainWindow::init() {
+    setMinimumSize(size());
+    setMaximumSize(size());
+    setWindowFlags(Qt::WindowCloseButtonHint);
+    ui->actionAdmit_defeat->setEnabled(false);
+    ui->actionStart->setEnabled(false);
+    information("Click <b>Connect</b> to launch a new connection!", true);
+    ui->TimeLeftLCD->hide();
+    connect(this, SIGNAL(time_update(int)), ui->TimeLeftLCD, SLOT(display(int)));
+}
+
+void MainWindow::set_timer_init(){
+    ui->TimeLeftLCD->show();
+    time_left = time_out;
+    ui->TimeLeftLCD->display(time_left);
+    new_one_second();
+}
+
+void MainWindow::new_one_second(){
+    // suppose the memory have been disposed of corectly, so that there's no memory leaking for game_timer
+    game_timer = new QTimer(this);
+    game_timer->setInterval(1000);
+    game_timer->setTimerType(Qt::PreciseTimer);
+    connect(game_timer, &QTimer::timeout, this, &MainWindow::timer_second_up_check);
+    game_timer->start();
 }
 
 void MainWindow::connect_to_server(QString IP, int Port, bool from_server) {
@@ -127,9 +191,19 @@ void MainWindow::read_dispatcher(){
         break;
 
     case 'T':// T
+        stop_and_renew_timer();
         information("<font color=\"red\">Opponent time out!</font>");
         Piece::turn_switch(true);
         break;
+
+    case 'S':// S
+        network_satus_sync_timer->stop();
+        network_satus_sync_timer->deleteLater();
+        network_satus_sync_timer = nullptr;
+        game_timer->stop();
+        game_timer->deleteLater();
+        game_timer = nullptr;
+        Piece::end("You win!\nYour opponent run out of time for 3 times.", "You win!  |  Your opponent run out of time for 3 times.");
 
     case 'R': // R
         other_ready = true;
@@ -138,6 +212,9 @@ void MainWindow::read_dispatcher(){
         } else {
             information("Your opponent is ready. Click <b>ready</b> to start the game.", true);
         }
+        break;
+
+    case '
     }
 }
 

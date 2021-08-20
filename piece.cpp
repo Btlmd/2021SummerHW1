@@ -92,6 +92,7 @@ Piece::Piece(QWidget* parent, int loc, int tm, int id): QPushButton(parent),  id
     place();
     setCursor(QCursor(Qt::ForbiddenCursor));
 
+    connect(this, &Piece::make_movement, win, &MainWindow::stop_and_renew_timer);
 }
 
 void Piece::test(){
@@ -455,7 +456,7 @@ void Piece::move_to(int loc, bool self) {
 
     location = loc;
 
-
+    emit make_movement();
 
     //Null situation
     if(is_null(loc)) {
@@ -477,14 +478,12 @@ void Piece::move_to(int loc, bool self) {
         board[loc]->hide();
         this->hide();
         board[loc] = nullptr;
-        qDebug()<<"init_movie";
         QMovie* mov = new QMovie(":/pic/Resource/explode.gif");
         QLabel* canvas = new QLabel(win);
         canvas->setMovie(mov);
         canvas->resize(75, 38);
         canvas->move(win_x[location % 5] - 5, win_y[location / 5] - 5 + 4);
         QTimer::singleShot(800,[canvas, mov](){
-            qDebug()<<"Moive killed";
             canvas->hide();
             canvas->deleteLater();
             delete mov;
@@ -518,6 +517,8 @@ void Piece::flip(bool self){
     this->clear = true;
     ++step_cnt;
     win->set_info_default();
+
+    emit make_movement();
 
     //undetermined phase judge logic ONLY
     if(our_team == -1){

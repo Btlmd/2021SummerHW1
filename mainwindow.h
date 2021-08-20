@@ -53,6 +53,15 @@ private slots:
 
     void on_actionStart_triggered();
 
+    void timer_second_up_check();
+
+    void other_possibly_timeout_network_check();
+public slots:
+    void stop_and_renew_timer();
+
+public: signals:
+    void time_update(int);
+
 private:
     Ui::MainWindow *ui;
 
@@ -69,5 +78,20 @@ private:
     bool other_ready {false};
 
     QString init_info {};
+
+    QTimer* game_timer {nullptr};
+
+    QTimer* network_satus_sync_timer {nullptr};
+
+    const int time_out {20};
+
+    int time_left {-1};
+
+    void set_timer_init();
+
+    void new_one_second();
+
+
+
 };
 #endif // MAINWINDOW_H

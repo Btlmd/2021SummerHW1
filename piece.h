@@ -30,6 +30,9 @@ public slots:
     int getId() const {
         return identity;
     }
+
+public: signals:
+    void make_movement();
 private:
     int location {0};
     int identity {0x7fffffff};
