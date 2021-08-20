@@ -7,6 +7,7 @@
 #include <QMouseEvent>
 
 class Piece;
+class Chess;
 
 class StepHint : public QLabel
 {
